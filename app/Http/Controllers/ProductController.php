@@ -57,7 +57,8 @@ class ProductController extends Controller
             }
         }
 
-        $directory = public_path('uploads/products');
+        $directory = base_path('public/assets/products');
+        File::ensureDirectoryExists($directory);
         $allFiles = File::files($directory);
 
         $deletedFiles = [];
@@ -97,15 +98,17 @@ class ProductController extends Controller
 
         $default_img = 'default_img';
         if ($request->hasFile($default_img)) {
-            if ($product->default_img && File::exists(public_path($product->default_img))) {
-                File::delete(public_path($product->default_img));
+            if ($product->default_img && File::exists(base_path($product->default_img))) {
+                File::delete(base_path($product->default_img));
             }
 
             $uniqueName = time() . '_' . mt_rand(100000, 999999);
             $image = $request->file($default_img);
             $imageName = $uniqueName . "_default_" . $image->getClientOriginalName();
-            $image->move(public_path('uploads/products'), $imageName);
-            $product->default_img = 'uploads/products/' . $imageName;
+            $destination = base_path('public/assets/products');
+            File::ensureDirectoryExists($destination);
+            $image->move($destination, $imageName);
+            $product->default_img = 'public/assets/products/' . $imageName;
         } else if (!$product->exists) {
             $product->default_img = null;
         }
@@ -113,15 +116,17 @@ class ProductController extends Controller
         for ($i = 1; $i <= 10; $i++) {
             $imgKey = 'img_' . $i;
             if ($request->hasFile($imgKey)) {
-                if ($product->$imgKey && File::exists(public_path($product->$imgKey))) {
-                    File::delete(public_path($product->$imgKey));
+                if ($product->$imgKey && File::exists(base_path($product->$imgKey))) {
+                    File::delete(base_path($product->$imgKey));
                 }
                 $image = $request->file($imgKey);
                 $uniqueName = time() . '_' . mt_rand(100000, 999999);
 
                 $imageName = $uniqueName . "_{$i}_" . $image->getClientOriginalName();
-                $image->move(public_path('uploads/products'), $imageName);
-                $product->$imgKey = 'uploads/products/' . $imageName;
+                $destination = base_path('public/assets/products');
+                File::ensureDirectoryExists($destination);
+                $image->move($destination, $imageName);
+                $product->$imgKey = 'public/assets/products/' . $imageName;
             } else if (!$product->exists) {
                 $product->$imgKey = null;
             }
@@ -494,7 +499,7 @@ class ProductController extends Controller
         }
 
         if ($product->$field) {
-            @unlink(public_path($product->$field));
+            @unlink(base_path($product->$field));
         }
 
         $product->$field = null;

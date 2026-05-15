@@ -36,7 +36,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Blade::directive('prodImage', function ($expression) {
-            return "<?php echo app()->environment('production') ? url('public/' . $expression) : asset($expression); ?>";
+            return "<?php echo asset($expression); ?>";
         });
     }
 }
