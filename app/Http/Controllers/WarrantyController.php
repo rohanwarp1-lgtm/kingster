@@ -81,6 +81,9 @@ class WarrantyController extends Controller
                     'warranty_status' => $warranty->warranty_status,
                 ];
             }
+            
+            $supportMobile = DB::table('general_settings')->value('customer_support_mobile');
+
 
             if (count($responseData) === 1) {
                 $status = $warranties[0]->warranty_status;
@@ -109,10 +112,11 @@ class WarrantyController extends Controller
                             'message' => 'Warranty expired!',
                             'data' => $responseData[0]
                         ]);
+                        
 
                     case 'Rejected':
                         return response()->json([
-                            'message' => "Warranty application for Serial Number {$warranties[0]->serial_number} is rejected. Contact support: +91 88665 13744",
+                            'message' => "Warranty application for Serial Number {$warranties[0]->serial_number} is rejected. Contact support: {$supportMobile}",
                             'status' => 4003,
                             'message' => 'Warranty rejected!',
                             'data' => $responseData[0]
@@ -137,11 +141,56 @@ class WarrantyController extends Controller
 
         }
 
-        if($request->type == 'application'){
+        // if($request->type == 'application'){
+        //     $purchase_date = $request->purchase_date;
+        //     $purchaseDate = Carbon::parse(str_replace('/', '-', $purchase_date));
+
+        //     $purchaseDate = Carbon::createFromFormat('Y-m-d', $purchase_date);
+        //     $expiryDate = $purchaseDate->addDays(365);
+
+        //     $findData = Warranty::where('serial_number', $request->serial_number)->where('is_deleted', 0)->where('warranty_status', '!=', 'Rejected')->first();
+        //     if(isset($findData)){
+        //         return response()->json([
+        //             'message' => "Serial Number ".$request->serial_number." already exists.",
+        //             'status' => 400,
+        //             'message' => 'Warranty saved successfully.'
+        //         ]);
+        //     }
+
+        //     $warranty = new Warranty();
+        //     $warranty->user_name = $request->buyer_name;
+        //     $warranty->mobile_number = $request->mobile;
+        //     $warranty->email = $request->email;
+        //     $warranty->purchase_source = $request->purchase_source;
+        //     $warranty->address = $request->address;
+        //     $warranty->product_name = $request->product_name;
+        //     $warranty->serial_number = $request->serial_number;
+        //     $warranty->purchase_date = Carbon::createFromFormat('Y-m-d', $purchase_date);
+        //     $warranty->expiry_date = $expiryDate->format('Y-m-d');
+        //     $warranty->warranty_status = 'Pending';
+        //     $warranty->modified_by = Auth::user()->id;
+        //     $warranty->save();
+
+        //     return response()->json([
+        //         'message' => "",
+        //         'status' => 200,
+        //         'message' => 'Warranty saved successfully.'
+        //     ]);
+        // }
+        
+       if($request->type == 'application'){
             $purchase_date = $request->purchase_date;
 
-            $purchaseDate = Carbon::createFromFormat('Y-m-d', $purchase_date);
-            $expiryDate = $purchaseDate->addDays(365);
+            try {
+                $purchaseDate = Carbon::parse(str_replace('/', '-', $purchase_date));
+            } catch (\Exception $e) {
+                return response()->json([
+                    'message' => 'Invalid purchase date format.',
+                    'status' => 4002,
+                ]);
+            }
+
+            $expiryDate = $purchaseDate->copy()->addDays(365);
 
             $findData = Warranty::where('serial_number', $request->serial_number)->where('is_deleted', 0)->where('warranty_status', '!=', 'Rejected')->first();
             if(isset($findData)){
@@ -160,10 +209,10 @@ class WarrantyController extends Controller
             $warranty->address = $request->address;
             $warranty->product_name = $request->product_name;
             $warranty->serial_number = $request->serial_number;
-            $warranty->purchase_date = Carbon::createFromFormat('Y-m-d', $purchase_date);
+            $warranty->purchase_date = $purchaseDate->format('Y-m-d');
             $warranty->expiry_date = $expiryDate->format('Y-m-d');
             $warranty->warranty_status = 'Pending';
-            $warranty->modified_by = Auth::user()->id;
+            $warranty->modified_by = Auth::check() ? Auth::user()->id : 1;
             $warranty->save();
 
             return response()->json([
@@ -172,6 +221,7 @@ class WarrantyController extends Controller
                 'message' => 'Warranty saved successfully.'
             ]);
         }
+
 
     }
 

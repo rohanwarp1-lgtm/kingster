@@ -8,6 +8,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\WarrantyController;
 use App\Http\Controllers\CustomAuthController;
 use App\Http\Controllers\GeneralSettingController;
+use App\Traits\MigrationTrait;
 
 /*
 |--------------------------------------------------------------------------
@@ -114,5 +115,12 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         Route::get('general-settings', [GeneralSettingController::class, 'index'])->name('general.setting');
         Route::post('general-setting-save', [GeneralSettingController::class, 'save'])->name('general.setting.save');
 
+        Route::get('migrate-all-tables', function () {
+            $runner = new class {
+                use MigrationTrait;
+            };
+
+            return $runner->migrateAllTables();
+        })->name('admin.migrate.all');
 
 });

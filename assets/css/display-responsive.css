@@ -1,0 +1,54 @@
+/* Responsive Display Classes - Override default media queries */
+
+/* Default values (already defined in style.css):
+.display-6 {
+  font-size: 26px;
+  font-weight: 600;
+}
+.display-7 {
+  font-size: 18px;
+  font-weight: 600;
+}
+*/
+
+/* Large screens (1200px and up) - use default values */
+
+/* Medium-large screens (992px to 1199px) */
+@media (max-width: 1199.98px) {
+  .display-6 {
+    font-size: 24px !important;
+  }
+  .display-7 {
+    font-size: 16px !important;
+  }
+}
+
+/* Medium screens (768px to 991px) */
+@media (max-width: 991.98px) {
+  .display-6 {
+    font-size: 22px !important;
+  }
+  .display-7 {
+    font-size: 14px !important;
+  }
+}
+
+/* Small screens (576px to 767px) */
+@media (max-width: 767.98px) {
+  .display-6 {
+    font-size: 20px !important;
+  }
+  .display-7 {
+    font-size: 12px !important;
+  }
+}
+
+/* Extra small screens (up to 575px) */
+@media (max-width: 575.98px) {
+  .display-6 {
+    font-size: 18px !important;
+  }
+  .display-7 {
+    font-size: 11px !important;
+  }
+} 
