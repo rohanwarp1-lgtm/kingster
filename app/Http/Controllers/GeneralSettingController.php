@@ -15,8 +15,8 @@ use App\Models\GeneralSetting;
 class GeneralSettingController extends Controller
 {
     public function index(){
-        $setting = \App\Models\GeneralSetting::first();
-        return view('admin/general_setting', compact('setting'));
+        $generalSettings = GeneralSetting::first() ?? new GeneralSetting();
+        return view('admin/general_setting', compact('generalSettings'));
     }
 
     public function save(Request $request){

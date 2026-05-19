@@ -76,26 +76,47 @@
                     <a id="menu_close" class="menu-close" href="javascript:void(0);"> <i class="fas fa-times"></i></a>
                 </div>
 
+                @php
+                    $staticProductLinks = [
+                        ['name' => 'External Hard Disk',    'route' => 'ssd',         'page' => 'kingster-hard-disk'],
+                        ['name' => 'Monitor Display',       'route' => 'monitor',     'page' => 'kingster-monitor'],
+                        ['name' => 'TWS Earbuds',           'route' => 'airbuds',     'page' => 'kingster-airbuds'],
+                        ['name' => 'Gaming Keyboard',       'route' => 'keyboard',    'page' => 'kingster-keyboard'],
+                        ['name' => '360 Laptop Stand',      'route' => 'laptop.stand','page' => 'kingster-laptop-stand'],
+                        ['name' => 'Flash Drive',           'route' => 'pendrive',    'page' => 'kingster-pendrive'],
+                    ];
+                    $staticPages = array_column($staticProductLinks, 'page');
+                    $dbHasProducts = isset($products) && $products->count() > 0;
+                    $isProductPage = $page == 'product-details'
+                        || in_array($page, $staticPages);
+                @endphp
+
                 <ul class="main-nav align-items-lg-center">
                     <li class=" <?php if ($page == '/' || $page == 'index-3') { echo 'active'; } ?>">
                         <a href="{{ url('/') }}">Home</a>
                     </li>
 
-                    @if(isset($products) && $products->count() > 0)
-                    <li class="has-submenu  <?php if ($page == 'product-details' || (isset($products) && $products->where('id', request()->segment(2))->count() > 0)) {echo 'active'; } ?>">
+                    <li class="has-submenu {{ $isProductPage ? 'active' : '' }}">
                         <a href="javascript:void(0);">Our Products <i class="fas fa-chevron-down"></i></a>
                         <ul class="submenu">
-                            @foreach($products as $product)
-                                <li class="<?php if ($page == 'product-details' && request()->segment(2) == $product->id) {echo 'active';} ?>">
-                                    <a href="{{ url('/product/' . $product->id) }}">{{ $product->product_name }}</a>
-                                </li>
-                            @endforeach
-                            <li class="active" style="border-top: 1px solid #130b377d;">
+                            @if($dbHasProducts)
+                                @foreach($products as $product)
+                                    <li class="{{ ($page == 'product-details' && request()->segment(2) == $product->id) ? 'active' : '' }}">
+                                        <a href="{{ url('/product/' . $product->id) }}">{{ $product->product_name }}</a>
+                                    </li>
+                                @endforeach
+                            @else
+                                @foreach($staticProductLinks as $sp)
+                                    <li class="{{ $page == $sp['page'] ? 'active' : '' }}">
+                                        <a href="{{ route($sp['route']) }}">{{ $sp['name'] }}</a>
+                                    </li>
+                                @endforeach
+                            @endif
+                            <li style="border-top: 1px solid #130b377d;">
                                 <a href="{{ route('products') }}" class="text-center">View All Products</a>
                             </li>
                         </ul>
                     </li>
-                    @endif
                     
                     <li class="has-submenu  <?php if ($page == 'warranty-application-form' || $page == 'warranty-status-lookup' || $page == 'product-replacement-policy') {echo 'active'; } ?>">
                         <a href="javascript:void(0);">Warranty Services <i class="fas fa-chevron-down"></i></a>

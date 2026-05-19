@@ -99,16 +99,16 @@
 									<div class="d-flex align-items-center">
 										<div class="mb-3">
 											<p class="fs-14 mb-0">Starts From</p>
-											<h4><span class="display-6 fw-bold" id="selling-monitor-pricing">₹4900</span><span class="text-decoration-line-through text-default" id="offer-monitor-pricing"> ₹5400</span></h4>
+											<h4><span class="display-6 fw-bold" id="selling-pricing">₹4,900.00</span><span class="text-decoration-line-through text-default" id="offer-pricing"> ₹5,400.00</span></h4>
 										</div>
 									</div>
-									<span class="badge bg-success mb-3 d-inline-flex align-items-center fw-medium"><i class="ti ti-circle-percentage me-1"></i><span id="offer-monitor-discount">9.26</span>% Offer</span>
+									<span class="badge bg-success mb-3 d-inline-flex align-items-center fw-medium"><i class="ti ti-circle-percentage me-1"></i><span id="offer-discount">9</span>% Offer</span>
 								</div>
 
 								<div class="d-flex align-items-center justify-content-between mb-3">
-									<button type="button" class="w-100 btn btn-primary me-2" id="twentyTwoInch">22" Inch</button>
-									<button type="button" class="w-100 btn btn-outline-primary me-2" id="twentyFourInch">24" Inch</button>
-									<button type="button" class="w-100 btn btn-outline-primary" id="twentySevenInch">27" Inch</button>
+									<button type="button" class="w-100 btn btn-primary me-2 variant-btn" data-price="4900" data-oprice="5400" id="twentyTwoInch">22" Inch</button>
+									<button type="button" class="w-100 btn btn-outline-primary me-2 variant-btn" data-price="6900" data-oprice="7500" id="twentyFourInch">24" Inch</button>
+									<button type="button" class="w-100 btn btn-outline-primary variant-btn" data-price="8900" data-oprice="9800" id="twentySevenInch">27" Inch</button>
 								</div>
 
 								<a href="https://api.whatsapp.com/send?phone=918866513744&text=Hello Kingster Team!!" target="_blank"  class="btn btn-lg btn-outline-light d-flex align-items-center justify-content-center w-100"><i class="ti ti-brand-whatsapp me-2"></i>Send Enquiry</a>
@@ -157,4 +157,28 @@
     @endcomponent
     @component('components.scrollToTop')
      @endcomponent
+
+@endsection
+
+@section('productfile-js')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function updatePricing(price, oprice) {
+        document.getElementById('selling-pricing').textContent = '₹' + parseFloat(price).toLocaleString('en-IN', {minimumFractionDigits: 2});
+        document.getElementById('offer-pricing').textContent = ' ₹' + parseFloat(oprice).toLocaleString('en-IN', {minimumFractionDigits: 2});
+        document.getElementById('offer-discount').textContent = Math.round(((oprice - price) / oprice) * 100);
+    }
+    document.querySelectorAll('.variant-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.variant-btn').forEach(function(b) {
+                b.classList.remove('btn-primary');
+                b.classList.add('btn-outline-primary');
+            });
+            this.classList.remove('btn-outline-primary');
+            this.classList.add('btn-primary');
+            updatePricing(this.dataset.price, this.dataset.oprice);
+        });
+    });
+});
+</script>
 @endsection

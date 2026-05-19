@@ -52,7 +52,7 @@
             <div class="col-lg-3 col-md-4 col-sm-6 d-flex">
                 <div class="journey-client-all aos" data-aos="fade-up">
                     <div class="journey-counter">
-                        <h2><span class="home-counter">{{ $generalSettings->active_clients }}</span>+</h2>
+                        <h2><span class="home-counter">{{ $generalSettings->active_clients ?? 0 }}</span>+</h2>
                         <p>Active Clients</p>
                     </div>
                 </div>
@@ -60,7 +60,7 @@
             <div class="col-lg-2 col-md-4 col-sm-6 d-flex">
                 <div class="journey-client-all aos" data-aos="fade-up">
                     <div class="journey-counter">
-                        <h2><span class="home-counter">{{ $generalSettings->expert_mechanics }}</span>+</h2>
+                        <h2><span class="home-counter">{{ $generalSettings->expert_mechanics ?? 0 }}</span>+</h2>
                         <p>Expert Mechanics</p>
                     </div>
                 </div>
@@ -68,7 +68,7 @@
             <div class="col-lg-2 col-md-4 col-sm-6 d-flex">
                 <div class="journey-client-all aos" data-aos="fade-up">
                     <div class="journey-counter">
-                        <h2><span class="home-counter">{{ $generalSettings->reputation_years }}</span>+</h2>
+                        <h2><span class="home-counter">{{ $generalSettings->reputation_years ?? 0 }}</span>+</h2>
                         <p>Years Reputation</p>
                     </div>
                 </div>
@@ -242,7 +242,7 @@
             </div>
         </div>
         <div class="row justify-content-center">
-            @if($generalSettings->first_reviewer_name && $generalSettings->first_reviewer_msg)
+            @if(isset($generalSettings) && $generalSettings->first_reviewer_name && $generalSettings->first_reviewer_msg)
                 <div class="col-lg-4 col-md-6 d-flex">
                     <div class="client-box w-100 aos" data-aos="fade-up">
                         <div class="client-content">
@@ -259,7 +259,7 @@
                     </div>
                 </div>
             @endif
-            @if($generalSettings->second_reviewer_name && $generalSettings->second_reviewer_msg)
+            @if(isset($generalSettings) && $generalSettings->second_reviewer_name && $generalSettings->second_reviewer_msg)
                 <div class="col-lg-4 col-md-6 d-flex">
                     <div class="client-box w-100 aos" data-aos="fade-up">
                         <div class="client-content">
@@ -276,7 +276,7 @@
                     </div>
                 </div>
             @endif
-            @if($generalSettings->third_reviewer_name && $generalSettings->third_reviewer_msg)
+            @if(isset($generalSettings) && $generalSettings->third_reviewer_name && $generalSettings->third_reviewer_msg)
                 <div class="col-lg-4 col-md-6 d-flex">
                     <div class="client-box w-100 aos" data-aos="fade-up">
                         <div class="client-content">

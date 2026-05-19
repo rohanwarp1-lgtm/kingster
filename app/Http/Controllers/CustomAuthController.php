@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Hash;
-use Session;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
@@ -31,7 +31,13 @@ class CustomAuthController extends Controller
     }
 
     public function warrantyManagement(){
-        return view('admin/index_admin');
+        $stats = [
+            'total_warranties' => \App\Models\Warranty::count(),
+            'pending_warranties' => \App\Models\Warranty::where('warranty_status', 'Pending')->count(),
+            'active_warranties' => \App\Models\Warranty::where('warranty_status', 'Active')->count(),
+            'total_products' => \App\Models\Product::count(),
+        ];
+        return view('admin/index_admin', compact('stats'));
     }
 
     public function signOut() {

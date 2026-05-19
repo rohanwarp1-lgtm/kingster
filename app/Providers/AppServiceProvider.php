@@ -3,40 +3,78 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\View;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Blade;
-use App\Models\GeneralSetting;
+use Illuminate\Support\Facades\View;
 use App\Models\Product;
+use App\Models\GeneralSetting;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
-        // Share general settings and products data with all views
-        View::composer('*', function ($view) {
-            $generalSettings = GeneralSetting::first();
-            $products = Product::where('status', 1)
-                              ->where('is_deleted', 0)
-                              ->orderBy('index', 'asc')
-                              ->get();
+        Paginator::useBootstrap();
 
-            $view->with('generalSettings', $generalSettings);
-            $view->with('products', $products);
-        });
+        $this->loadHelpers();
 
+        // Share $products and $generalSettings with every frontend view so the
+        // header nav (logo, top-bar, Our Products dropdown) always renders.
+        View::composer(
+            ['layout.mainlayout', 'layout.partials.header', 'layout.partials.footer',
+             'index-3', 'products', 'product-details', 'about-us', 'contact-us',
+             'shipping-returns', 'privacy-policy', 'terms-condition',
+             'warranty-apply', 'warranty-check', 'warranty-rules'],
+            function ($view) {
+                static $products = null;
+                static $generalSettings = null;
+
+                if ($products === null) {
+                    try {
+                        $products = Product::where('status', 1)
+                            ->where('is_deleted', 0)
+                            ->orderBy('index', 'asc')
+                            ->get();
+                    } catch (\Exception $e) {
+                        $products = collect();
+                    }
+                }
+
+                if ($generalSettings === null) {
+                    try {
+                        $generalSettings = GeneralSetting::first();
+                    } catch (\Exception $e) {
+                        $generalSettings = null;
+                    }
+                }
+
+                $view->with('products', $products)
+                     ->with('generalSettings', $generalSettings);
+            }
+        );
+
+        // Resolve product/setting image paths to public asset URLs.
+        // Stored paths may be prefixed with 'public/' (products) or not (settings).
         Blade::directive('prodImage', function ($expression) {
-            return "<?php echo asset($expression); ?>";
+            return "<?php
+                \$_pi = (string) ({$expression});
+                if (\$_pi === '' || \$_pi === null) { echo ''; }
+                elseif (str_starts_with(\$_pi, 'public/')) { echo asset(substr(\$_pi, 7)); }
+                else { echo asset(\$_pi); }
+            ?>";
         });
+    }
+
+    protected function loadHelpers(): void
+    {
+        $helpers = glob(app_path('Support/*.php'));
+
+        foreach ($helpers as $helper) {
+            require_once $helper;
+        }
     }
 }

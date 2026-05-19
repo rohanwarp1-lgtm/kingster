@@ -19,9 +19,9 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         DB::table('users')->insert([
-            'username' => 'Kingster',
-            'email' => 'kingster@gmail.com',
-            'password' => Hash::make('Kingster@2025'), // Use secure password
+            'username' => 'test',
+            'email' => 'test@gmail.com',
+            'password' => Hash::make('test'), // Use secure password
             'role' => 'Super Admin',
             'session_id' => Str::random(40),
             'created_at' => now(),

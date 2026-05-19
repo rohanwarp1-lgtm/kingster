@@ -73,6 +73,9 @@ class UserController extends Controller
         }
         $user->save();
 
+        $action = $isEdit ? 'updated' : 'created';
+        activity('user')->causedBy(auth()->user())->performedOn($user)->withProperties(['username' => $user->username, 'role' => $user->role])->log($action);
+
         return response()->json([
             'status' => true,
             'message' => $isEdit ? 'User updated successfully!' : 'User created successfully!'
@@ -170,69 +173,37 @@ class UserController extends Controller
         ]);
     }
 
-    public function changeStatus(Request $request){
-        try {
-            $warranty = Warranty::findOrFail($request->id);
-            $warranty->warranty_status = $request->status;
-            $warranty->modified_by = Auth::user()->id;
-            $warranty->save();
-
-            return response()->json([
-                'status' => 1,
-                'message' => 'Warranty status updated.',
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 0,
-                'message' => 'Something went wrong: ' . $e->getMessage(),
-            ]);
-        }
-    }
-
     public function delete(Request $request){
-        $user = User::find($request->id);
-        if($user){
-            $user->delete();
-            return response()->json([
-                'status' => true,
-                'message' => 'User deleted successfully!'
-            ]);
+        try {
+            $user = User::find($request->id);
+            if($user){
+                if($user->id == 1){
+                    return response()->json(['status' => false, 'message' => 'CEO cannot be deleted!']);
+                }
+                $user->is_deleted = 1;
+                $user->save();
+                activity('user')->causedBy(auth()->user())->performedOn($user)->log('deleted');
+                return response()->json(['status' => 1, 'message' => 'User deleted successfully!']);
+            }
+            return response()->json(['status' => false, 'message' => 'User not found!']);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'message' => 'Something went wrong: ' . $e->getMessage()]);
         }
-        return response()->json([
-            'status' => false,
-            'message' => 'User not found'
-        ]);
     }
 
     public function restore(Request $request){
-
-        $findData = Warranty::find($request->id);
-        $findData->is_deleted = 0;
-        $findData->modified_by = Auth::user()->id;
-        $findData->save();
-
-        return response()->json([
-            'status' => 1,
-            'message' => 'Warranty restore successfully.'
-        ]);
-    }
-
-    public function userDetails(Request $request){
-
-        $user = User::find($request->id);
-        if (!$user) {
-            return response()->json(['status' => false, 'message' => 'User not found']);
+        try {
+            $user = User::find($request->id);
+            if($user){
+                $user->is_deleted = 0;
+                $user->save();
+                activity('user')->causedBy(auth()->user())->performedOn($user)->log('updated');
+                return response()->json(['status' => 1, 'message' => 'User restored successfully!']);
+            }
+            return response()->json(['status' => false, 'message' => 'User not found!']);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'message' => 'Something went wrong: ' . $e->getMessage()]);
         }
-
-        return response()->json([
-            'status' => true,
-            'data' => [
-                'id'    => $user->id,
-                'name'  => $user->username,
-                'email' => $user->email,
-                'role'  => $user->role
-            ]
-        ]);
     }
 
     public function getDetails(Request $request){
@@ -240,7 +211,12 @@ class UserController extends Controller
         if($user){
             return response()->json([
                 'status' => true,
-                'data' => $user
+                'data' => [
+                    'id'    => $user->id,
+                    'name'  => $user->username,
+                    'email' => $user->email,
+                    'role'  => $user->role
+                ]
             ]);
         }
         return response()->json([

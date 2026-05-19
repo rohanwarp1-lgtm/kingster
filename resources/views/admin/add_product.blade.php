@@ -11,19 +11,35 @@
 @endphp
 
 
-<div class="page-wrapper" style="margin-left: 0px !important;">
-    <div class="content">
+<div class="page-wrapper">
+    <div class="content container-fluid">
 
-        <div class="row">
-            <h5 class="text-uppercase tab-heading" id="addNewProductLabel">{{ $pageTitle }}</h5>
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">{{ $pageTitle }}</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ route('admin.warranty.management') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('product.index') }}">Products</a></li>
+                        <li class="breadcrumb-item active">{{ $isEdit ? 'Edit' : 'Add' }}</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <a href="{{ route('product.index') }}" class="btn btn-secondary">
+                        <i class="fe fe-arrow-left"></i> Back
+                    </a>
+                </div>
+            </div>
         </div>
 
-
         <div class="row">
-            <div class="card p-0">
-                <div class="card-body p-3">
-                    <div class="form" id="productCreationForm">
-                        <form method="POST" enctype="multipart/form-data">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">{{ $pageTitle }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="form" id="productCreationFormWrapper">
+                        <form id="productCreationForm" method="POST" action="{{ route('product.store') }}" enctype="multipart/form-data">
                         @csrf
                         @if($isEdit)
                             <input type="hidden" name="id" value="{{ $product->id }}">
@@ -214,13 +230,15 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="col-12 text-center">
-                                <button type="submit" class="btn gradientBTN w-25" style="text-align:center; display: inline-block !important; margin: 0 auto;" id="saveProductBtn">{{ $buttonText }}</button>
+                        <div class="row mt-3">
+                            <div class="col-12 d-flex gap-2 justify-content-end">
+                                <a href="{{ route('product.index') }}" class="btn btn-secondary">Cancel</a>
+                                <button type="submit" class="btn gradientBTN px-4" id="saveProductBtn">
+                                    <i class="fe fe-save"></i> {{ $buttonText }}
+                                </button>
                             </div>
                         </div>
                     </form>
-                    </div>
                 </div>
             </div>
         </div>
@@ -234,16 +252,49 @@
 <script>
 
     window.isEdit = {{ $isEdit ? 'true' : 'false' }};
-    window.hasDefaultImg = {{ ($isEdit && $product && $product->default_img) ? 'true' : 'false' }};
-    window.hasAdditionalImg = {{ ($isEdit && $product && (
-        $product->img_1 || $product->img_2 || $product->img_3 || $product->img_4 || $product->img_5 || $product->img_6)
-    ) ? 'true' : 'false' }};
-
-    console.log(window.isEdit);
-    console.log(window.hasDefaultImg);
-    console.log(window.hasAdditionalImg);
 
     document.addEventListener('DOMContentLoaded', function() {
+        // AJAX product form submission
+        document.getElementById('productCreationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var form = this;
+            var formData = new FormData(form);
+            var btn = document.getElementById('saveProductBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') }
+            })
+            .then(r => r.json())
+            .then(function(res) {
+                if (res.status === 1 || res.success) {
+                    toastr.success(res.message || 'Product saved!');
+                    setTimeout(function() {
+                        window.location.href = productIndexUrl;
+                    }, 1000);
+                } else {
+                    toastr.error(res.message || 'Failed to save product');
+                    btn.disabled = false;
+                    btn.textContent = '{{ $buttonText }}';
+                }
+            })
+            .catch(function() {
+                toastr.error('An error occurred. Please try again.');
+                btn.disabled = false;
+                btn.textContent = '{{ $buttonText }}';
+            });
+        });
+
+        // Clear image button
+        document.querySelectorAll('.clear-btn[data-img]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var target = document.querySelector(this.getAttribute('data-img'));
+                if (target) target.value = '';
+            });
+        });
         document.querySelectorAll('.delete-image-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 if (!confirm('Are you sure you want to delete this image?')) return;
@@ -312,6 +363,26 @@
         }
 
         updateAddVariantButton();
+
+        // Show/hide variant section based on checkbox
+        document.getElementById('uc_has_variant').addEventListener('change', function() {
+            var section = document.getElementById('variant-section');
+            var v1 = document.getElementById('variant-1');
+            if (this.checked) {
+                section.style.display = 'block';
+                v1.style.display = 'block';
+            } else {
+                section.style.display = 'none';
+                for (let i = 1; i <= 3; i++) {
+                    var vs = document.getElementById('variant-' + i);
+                    if (vs) {
+                        vs.querySelectorAll('input').forEach(function(inp) { inp.value = ''; });
+                        vs.style.display = 'none';
+                    }
+                }
+            }
+            updateAddVariantButton();
+        });
     });
 </script>
 @endsection

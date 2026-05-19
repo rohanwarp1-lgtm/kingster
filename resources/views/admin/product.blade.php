@@ -2,57 +2,42 @@
 @extends('layout.mainlayout_admin')
 @section('content')
 
-@php
-    $isEdit = isset($product) && $product;
-@endphp
+<div class="page-wrapper">
+    <div class="content container-fluid">
 
-<style>
-    .dataTables_info {
-        font-size: 14px;
-        font-weight: 500 !important;
-    }
-
-    .swal2-select {
-        border-radius: 10px;
-        border: 2px solid #00000075;
-    }
-    .select2-container {
-        width: 100% !important;
-    }
-    .select2-selection {
-        min-height: 38px;
-    }
-    #sortable-products { min-height: 50px; }
-    #sortable-products .list-group-item { cursor: move; }
-    .ui-state-highlight { height: 2.5em; background: #f0f0f0; border: 1px dashed #aaa; }
-</style>
-    <div class="page-wrapper" style="margin-left: 0px !important;">
-        <div class="content">
-
-            <div class="row">
-                <h5 class="text-uppercase tab-heading">Product Management</h5>
-            </div>
-
-            <div class="row mb-3 align-items-center">
-                <div class="col-md-6">
-                    <label for="products_management_status_filter" class="form-label">Status Filter</label>
-                    <select class="form-control" name="products_management_status_filter" id="products_management_status_filter">
-                        <option value="0">Active</option>
-                        <option value="1">Deleted</option>
-                    </select>
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Product Management</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ route('admin.warranty.management') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Products</li>
+                    </ul>
                 </div>
-                <div class="col-md-6 d-flex justify-content-end">
-                    <a href="javascript:void(0)" class="btn gradientBTN me-3" id="product_indexing">Indexing</a>
-                    <a href="{{ route('create.product.view') }}" class="btn gradientBTN me-3">Add New Product</a>
-                    <a href="{{ route('create.product.name.view') }}" class="btn gradientBTN">Product Name Management</a>
+                <div class="col-auto d-flex gap-2">
+                    <button type="button" class="btn btn-outline-primary" id="product_indexing">
+                        <i class="fe fe-list"></i> Reorder
+                    </button>
+                    <a href="{{ route('create.product.view') }}" class="btn btn-primary">
+                        <i class="fe fe-plus"></i> Add Product
+                    </a>
                 </div>
             </div>
+        </div>
 
-            <div class="row">
-                <div class="card p-0">
-                    <div class="card-body p-3">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="card-title">Products List</h4>
+                        <select class="form-select form-select-sm" id="products_management_status_filter" style="width:150px;">
+                            <option value="0">Active</option>
+                            <option value="1">Deleted</option>
+                        </select>
+                    </div>
+                    <div class="card-body">
                         <div class="table-responsive">
-                            <table id="datatable_1" class="table align-middle table-nowrap table-striped display nowrap w-100">
+                            <table id="datatable_1" class="table table-hover mb-0">
                                 <thead>
                                     <tr>
                                         <th>Action</th>
@@ -60,12 +45,12 @@
                                         <th>Offer Price</th>
                                         <th>Original Price</th>
                                         <th>Rating</th>
-                                        <th>Review Count</th>
-                                        <th>Sold Count</th>
+                                        <th>Reviews</th>
+                                        <th>Sold</th>
                                         <th>Created By</th>
                                         <th>Modified By</th>
-                                        <th>Created At</th>
-                                        <th>Updated At</th>
+                                        <th>Created</th>
+                                        <th>Updated</th>
                                     </tr>
                                 </thead>
                                 <tbody></tbody>
@@ -76,92 +61,77 @@
                 </div>
             </div>
         </div>
-    </div>
 
-<div class="modal fade" id="indexingModal" tabindex="-1" aria-labelledby="indexingModalLabel" aria-hidden="true">
+    </div>
+</div>
+
+{{-- Product Indexing Modal --}}
+<div class="modal fade" id="indexingModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <form id="indexingForm" method="POST" action="{{ route('admin.product.updateIndexing') }}">
-            @csrf
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="indexingModalLabel">Product Indexing</h5>
+                <h5 class="modal-title">Product Ordering</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                    <ul id="sortable-products" class="list-group mb-3">
+            <form id="indexingForm" method="POST" action="{{ route('admin.product.updateIndexing') }}">
+                @csrf
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">Drag and drop to reorder products. The order here determines display order on the frontend.</p>
+                    <ul id="sortable-products" class="list-group mb-3" style="min-height:50px;">
                         @foreach($products as $product)
-                            <li class="list-group-item d-flex align-items-center" data-id="{{ $product->id }}">
-                                <span class="me-2">&#9776;</span>
-                                <input type="checkbox" checked class="d-none form-check-input me-2" name="product_indexes[]" value="{{ $product->id }}" id="product_{{ $product->id }}">
-                                <label for="product_{{ $product->id }}" class="mb-0">{{ $product->product_name }}</label>
+                            <li class="list-group-item d-flex align-items-center gap-2" data-id="{{ $product->id }}" style="cursor:move; border-radius:8px; margin-bottom:4px;">
+                                <i class="fe fe-move text-muted"></i>
+                                <input type="checkbox" checked class="d-none form-check-input" name="product_indexes[]" value="{{ $product->id }}">
+                                <span>{{ $product->product_name }}</span>
                             </li>
                         @endforeach
                     </ul>
-                    <div id="indexing-message" class="mt-2"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="closeIndexingModalBtn">Close</button>
-                    <button type="submit" class="btn gradientBTN" id="saveIndexingBtn">Save Indexing</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn gradientBTN">
+                        <i class="fe fe-save"></i> Save Order
+                    </button>
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
 
 @endsection
 
 @section('prouctpage-js')
-<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
 <script>
-    $(function() {
-        $('#product_indexes').select2({
-            width: '100%',
-            placeholder: "Select products"
-        });
+$(function() {
+    let sortableInitialized = false;
 
-        // Only initialize once
-        let sortableInitialized = false;
+    $('#indexingModal').on('shown.bs.modal', function() {
+        if (!sortableInitialized) {
+            $("#sortable-products").sortable({ placeholder: "ui-state-highlight" });
+            sortableInitialized = true;
+        }
+    });
 
-        $('#indexingModal').on('shown.bs.modal', function () {
-            if (!sortableInitialized) {
-                $("#sortable-products").sortable({
-                    placeholder: "ui-state-highlight"
-                });
-                sortableInitialized = true;
+    $('#indexingForm').on('submit', function(e) {
+        e.preventDefault();
+        $.ajax({
+            url: $(this).attr('action'),
+            type: 'POST',
+            data: $(this).serialize(),
+            success: function() {
+                toastr.success('Product order saved!');
+                var modal = bootstrap.Modal.getInstance(document.getElementById('indexingModal'));
+                if (modal) modal.hide();
+            },
+            error: function(xhr) {
+                toastr.error(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'An error occurred.');
             }
-        });
-
-        // AJAX form submit for indexing
-        $('#indexingForm').on('submit', function(e) {
-            e.preventDefault();
-            var $form = $(this);
-            var url = $form.attr('action');
-            var formData = $form.serialize();
-            $.ajax({
-                url: url,
-                type: 'POST',
-                data: formData,
-                success: function(response) {
-                    toastr.success('Indexing saved successfully!');
-                    var modalEl = document.getElementById('indexingModal');
-                    var modal = bootstrap.Modal.getInstance(modalEl);
-                    if (modal) modal.hide();
-                },
-                error: function(xhr) {
-                    let msg = 'An error occurred. Please try again.';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        msg = xhr.responseJSON.message;
-                    }
-                    toastr.error(msg);
-                }
-            });
         });
     });
 
     document.getElementById('product_indexing').addEventListener('click', function() {
-        var modal = new bootstrap.Modal(document.getElementById('indexingModal'));
-        modal.show();
+        new bootstrap.Modal(document.getElementById('indexingModal')).show();
     });
+});
 </script>
 @endsection

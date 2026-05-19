@@ -24,11 +24,10 @@ class ProductController extends Controller
     public function updateIndexing(Request $request){
         $productIds = $request->input('product_indexes', []);
 
-        $realProductIDS = Product::where('is_deleted', 0)->orderBy('id')->get()->toArray();
-        foreach ($realProductIDS as $position => $productId) {
-            Product::where('id', $productIds[$position])->update(['index' => $position + 1]);
+        foreach ($productIds as $position => $id) {
+            Product::where('id', $id)->update(['index' => $position + 1]);
         }
-        return redirect()->back()->with('success', 'Product indexing updated!');
+        return response()->json(['success' => true, 'message' => 'Product order saved!']);
     }
 
     //
@@ -158,6 +157,9 @@ class ProductController extends Controller
         $saveIndex->index = $product->id;
         $saveIndex->save();
 
+        $action = $request->id ? 'updated' : 'created';
+        activity('product')->causedBy(auth()->user())->performedOn($product)->withProperties(['name' => $product->product_name])->log($action);
+
         $msg = $request->id ? 'Product updated successfully!' : 'Product saved successfully!';
         return response()->json(['status' => 1, 'success' => true, 'message' => $msg]);
     }
@@ -282,6 +284,8 @@ class ProductController extends Controller
             $product->modified_by = Auth::id();
             $product->save();
 
+            activity('product')->causedBy(auth()->user())->performedOn($product)->log('deleted');
+
             return response()->json(['status' => 1, 'success' => true, 'message' => 'Product deleted successfully!']);
 
         } catch (\Exception $e) {
@@ -299,6 +303,8 @@ class ProductController extends Controller
             $product->is_deleted = 0;
             $product->modified_by = Auth::id();
             $product->save();
+
+            activity('product')->causedBy(auth()->user())->performedOn($product)->log('updated');
 
             return response()->json(['status' => 1, 'success' => true, 'message' => 'Product restored successfully!']);
 
@@ -421,7 +427,7 @@ class ProductController extends Controller
                 }else{
                     $uiAction .= '<li class="list-inline-item px-2 pos-middle"><a href="javascript:void(0);" onclick="productNameRestore(' . $item->id . ')"><i class="fe fe-rotate-ccw"></i></a></li>';
                 }
-                $uiAction .= '<li class="list-inline-item px-2 pos-middle"><a href="javascript:void(0);" onclick="productNameEditView(' . $item->id . ')"><i class="fe fe-edit"></i></a></li>';
+                $uiAction .= '<li class="list-inline-item px-2 pos-middle"><a href="javascript:void(0);" onclick="productNameEdit(' . $item->id . ')"><i class="fe fe-edit"></i></a></li>';
             $uiAction .= '</ul>';
 
             $row['action'] = $uiAction;

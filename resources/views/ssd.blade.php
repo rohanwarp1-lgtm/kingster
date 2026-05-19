@@ -101,9 +101,9 @@
 								</div>
 
 								<div class="d-flex align-items-center justify-content-between mb-3">
-									<button type="button" class="w-100 btn btn-primary me-2" id="threeTwoGB">320GB</button>
-									<button type="button" class="w-100 btn btn-outline-primary me-2" id="fiveZeroGB">500GB</button>
-									<button type="button" class="w-100 btn btn-outline-primary" id="oneTB">1TB</button>
+									<button type="button" class="w-100 btn btn-primary me-2 variant-btn" data-price="1800" data-oprice="2000" id="threeTwoGB">320GB</button>
+									<button type="button" class="w-100 btn btn-outline-primary me-2 variant-btn" data-price="2200" data-oprice="2500" id="fiveZeroGB">500GB</button>
+									<button type="button" class="w-100 btn btn-outline-primary variant-btn" data-price="3500" data-oprice="4000" id="oneTB">1TB</button>
 								</div>
 
 								<a href="https://api.whatsapp.com/send?phone=918866513744&text=Hello Kingster Team!!" target="_blank"  class="btn btn-lg btn-outline-light d-flex align-items-center justify-content-center w-100"><i class="ti ti-brand-whatsapp me-2"></i>Send Enquiry</a>
@@ -152,4 +152,28 @@
     @endcomponent
     @component('components.scrollToTop')
      @endcomponent
+
+@endsection
+
+@section('productfile-js')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function updatePricing(price, oprice) {
+        document.getElementById('selling-pricing').textContent = '₹' + parseFloat(price).toLocaleString('en-IN', {minimumFractionDigits: 2});
+        document.getElementById('offer-pricing').textContent = ' ₹' + parseFloat(oprice).toLocaleString('en-IN', {minimumFractionDigits: 2});
+        document.getElementById('offer-discount').textContent = Math.round(((oprice - price) / oprice) * 100);
+    }
+    document.querySelectorAll('.variant-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.variant-btn').forEach(function(b) {
+                b.classList.remove('btn-primary');
+                b.classList.add('btn-outline-primary');
+            });
+            this.classList.remove('btn-outline-primary');
+            this.classList.add('btn-primary');
+            updatePricing(this.dataset.price, this.dataset.oprice);
+        });
+    });
+});
+</script>
 @endsection
