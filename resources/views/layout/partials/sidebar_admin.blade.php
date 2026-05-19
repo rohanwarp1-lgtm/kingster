@@ -11,9 +11,10 @@
                 <li class="menu-title"><span>Main</span></li>
                 <li class="{{ Route::is('admin.warranty.management') ? 'active' : '' }}">
                     <a href="{{ route('admin.warranty.management') }}">
-                        <i class="fe fe-grid"></i> <span>Dashboard</span>
+                        <i class="fe fe-shield"></i> <span>Warranty Dashboard</span>
                     </a>
                 </li>
+                
 
                 <li class="menu-title"><span>Modules</span></li>
                 <li class="{{ Route::is('admin.fba-auto.*') ? 'active' : '' }}">
@@ -21,19 +22,14 @@
                         <i class="fe fe-truck"></i> <span>FBA Shipment</span>
                     </a>
                 </li>
-                <li class="{{ Route::is('admin.warranty.index') ? 'active' : '' }}">
-                    <a href="{{ route('admin.warranty.index') }}">
-                        <i class="fe fe-shield"></i> <span>Warranty</span>
-                    </a>
-                </li>
                 <li class="{{ Route::is('admin.rma.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.rma.index') }}">
-                        <i class="fe fe-refresh-cw"></i> <span>RMA Management</span>
+                        <i class="fe fe-refresh-cw"></i> <span>Customer Return</span>
                     </a>
                 </li>
                 <li class="{{ Route::is('admin.return-report.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.return-report.index') }}">
-                        <i class="fe fe-bar-chart-2"></i> <span>Return Reports</span>
+                        <i class="fe fe-bar-chart-2"></i> <span>FBA ReturnsDashboard</span>
                     </a>
                 </li>
 

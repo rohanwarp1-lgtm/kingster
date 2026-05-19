@@ -15,4 +15,5 @@ Route::prefix('admin/fba-auto')->name('admin.fba-auto.')->group(function () {
     Route::post('/bulk-action', [FbaAutoController::class, 'bulkAction'])->name('bulk-action');
     Route::get('/ajax', [FbaAutoController::class, 'ajax'])->name('ajax');
     Route::get('/stats', [FbaAutoController::class, 'getStats'])->name('stats');
+    Route::get('/products/search', [FbaAutoController::class, 'searchProducts'])->name('products.search');
 });

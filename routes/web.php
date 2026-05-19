@@ -11,6 +11,7 @@ use App\Http\Controllers\GeneralSettingController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\ActivityLogController;
 use App\Traits\MigrationTrait;
+use App\Modules\FbaAuto\Http\Controllers\Admin\FbaAutoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -143,6 +144,7 @@ Route::middleware(['auth', \App\Http\Middleware\AutoMigrate::class])->prefix('ad
         Route::post('fba-auto/change-status/{id}', [ModuleController::class, 'fbaAutoChangeStatus'])->name('admin.fba-auto.change-status');
         Route::get('fba-auto/ajax', [ModuleController::class, 'fbaAutoAjax'])->name('admin.fba-auto.ajax');
         Route::get('fba-auto/stats', [ModuleController::class, 'fbaAutoStats'])->name('admin.fba-auto.stats');
+        Route::get('fba-auto/products/search', [FbaAutoController::class, 'searchProducts'])->name('admin.fba-auto.products.search');
 
         // Module Routes - Warranty
         Route::get('warranty', [ModuleController::class, 'warrantyIndex'])->name('admin.warranty.index');

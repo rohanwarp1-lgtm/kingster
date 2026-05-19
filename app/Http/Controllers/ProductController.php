@@ -17,7 +17,7 @@ use App\Models\ProductName;
 class ProductController extends Controller
 {
     public function index(){
-        $products = Product::where('is_deleted', 0)->orderBy('index')->get()->toArray();
+        $products = Product::where('is_deleted', 0)->orderBy('index')->get();
         return view('admin.product', compact('products'));
     }
 

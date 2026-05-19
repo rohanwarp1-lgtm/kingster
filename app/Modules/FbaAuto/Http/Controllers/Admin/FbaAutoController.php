@@ -21,9 +21,9 @@ class FbaAutoController extends Controller
 
     public function index(FbaAutoDataTable $dataTable)
     {
-        $warehouses = $this->service->repository->getWarehouses();
-        $states = $this->service->repository->getStates();
-        $productNames = $this->service->repository->getProductNames();
+        $warehouses = $this->service->getWarehouses();
+        $states = $this->service->getStates();
+        $productNames = $this->service->getProductNames();
 
         return $dataTable->render('admin.modules.fba-auto.index', compact('warehouses', 'states', 'productNames'));
     }
@@ -60,14 +60,14 @@ class FbaAutoController extends Controller
 
     public function edit(int $id)
     {
-        $shipment = $this->service->repository->find($id);
-        
+        $shipment = $this->service->find($id);
+
         if (!$shipment) {
             abort(404, 'Shipment not found');
         }
-        
-        $warehouses = $this->service->repository->getWarehouses();
-        $states = $this->service->repository->getStates();
+
+        $warehouses = $this->service->getWarehouses();
+        $states = $this->service->getStates();
         
         return view('admin.modules.fba-auto.edit', compact('shipment', 'warehouses', 'states'));
     }
@@ -228,10 +228,19 @@ class FbaAutoController extends Controller
     public function getStats(): JsonResponse
     {
         $stats = $this->service->getDashboardStats();
-        
+
         return response()->json([
             'success' => true,
             'data' => $stats,
+        ]);
+    }
+
+    public function searchProducts(Request $request): JsonResponse
+    {
+        $products = $this->service->searchProducts($request->get('q', ''));
+
+        return response()->json([
+            'results' => collect($products)->map(fn($p) => ['id' => $p, 'text' => $p])->values(),
         ]);
     }
 }

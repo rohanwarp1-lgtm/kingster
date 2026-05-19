@@ -88,6 +88,17 @@ class FbaAutoRepository implements FbaAutoRepositoryInterface
             ->toArray();
     }
 
+    public function searchProducts(string $term): array
+    {
+        return $this->model->whereNotNull('product_name')
+            ->when($term, fn($q) => $q->where('product_name', 'like', "%{$term}%"))
+            ->distinct()
+            ->orderBy('product_name')
+            ->limit(30)
+            ->pluck('product_name')
+            ->toArray();
+    }
+
     public function getWarehouses(): array
     {
         return $this->model->whereNotNull('warehouse_name')

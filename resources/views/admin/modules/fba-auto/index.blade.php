@@ -124,9 +124,76 @@
 
 @push('scripts')
 <script>
+var productRowIndex = 0;
+
 function openCreateModal() {
+    productRowIndex = 0;
+    $('#product-rows').empty();
+    addProductRow();
     initFbaSelect2($('#createModal'));
     $('#createModal').modal('show');
+}
+
+function addProductRow() {
+    var idx = productRowIndex++;
+    var row = `<tr id="row-${idx}">
+        <td class="text-center row-num"></td>
+        <td>
+            <select name="items[${idx}][product_name]" class="form-select product-ajax-select2 w-100" style="width:100%" required>
+                <option value=""></option>
+            </select>
+        </td>
+        <td>
+            <input type="number" name="items[${idx}][qty]" class="form-control form-control-sm" min="1" placeholder="0" required>
+        </td>
+        <td>
+            <input type="number" name="items[${idx}][qty_price]" class="form-control form-control-sm" step="0.01" min="0" placeholder="0.00" required>
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-danger remove-row-btn" data-row="${idx}">
+                <i class="fe fe-trash-2"></i>
+            </button>
+        </td>
+    </tr>`;
+    $('#product-rows').append(row);
+    initProductSelect2($(`#row-${idx} .product-ajax-select2`));
+    updateRowNumbers();
+}
+
+function updateRowNumbers() {
+    $('#product-rows tr').each(function(i) {
+        $(this).find('.row-num').text(i + 1);
+    });
+}
+
+function initProductSelect2($el) {
+    $el.select2({
+        width: '100%',
+        placeholder: 'Search or type product name',
+        allowClear: true,
+        tags: true,
+        dropdownParent: $('#createModal'),
+        ajax: {
+            url: '{{ route('admin.fba-auto.products.search') }}',
+            dataType: 'json',
+            delay: 250,
+            data: function(params) { return { q: params.term || '' }; },
+            processResults: function(data) { return data; },
+            cache: true
+        },
+        minimumInputLength: 0,
+        createTag: function(params) {
+            var term = $.trim(params.term);
+            if (!term) return null;
+            return { id: term, text: term, isNew: true };
+        },
+        templateResult: function(data) {
+            if (data.isNew) {
+                return $('<span><i class="fe fe-plus-circle me-1 text-primary"></i>Add: <strong>' + data.text + '</strong></span>');
+            }
+            return data.text;
+        }
+    });
 }
 
 $(function () {
@@ -220,10 +287,23 @@ $(document).on('click', '.delete-btn', function() {
     });
 });
 
+$(document).on('click', '#add-product-row', function() {
+    addProductRow();
+});
+
+$(document).on('click', '.remove-row-btn', function() {
+    if ($('#product-rows tr').length === 1) {
+        toastr.warning('At least one product row is required');
+        return;
+    }
+    $(this).closest('tr').remove();
+    updateRowNumbers();
+});
+
 $('#create-form').on('submit', function(e) {
     e.preventDefault();
     let formData = new FormData(this);
-    
+
     $.ajax({
         url: '{{ route('admin.fba-auto.store') }}',
         type: 'POST',
@@ -235,15 +315,18 @@ $('#create-form').on('submit', function(e) {
             if (response.success) {
                 toastr.success(response.message);
                 $('#createModal').modal('hide');
-                $('#create-form')[0].reset();
-                $('#create-form .fba-select2').val(null).trigger('change');
                 $('#fba-auto-table').DataTable().ajax.reload();
             } else {
                 toastr.error(response.message);
             }
         },
         error: function(xhr) {
-            toastr.error(xhr.responseJSON.message || 'Error occurred');
+            let msg = xhr.responseJSON?.message || 'Error occurred';
+            let errors = xhr.responseJSON?.errors;
+            if (errors) {
+                msg = Object.values(errors).flat().join('<br>');
+            }
+            toastr.error(msg);
         }
     });
 });
@@ -272,7 +355,14 @@ $(document).on('submit', '#edit-form', function(e) {
     });
 });
 
-$('#createModal, #editModal').on('hidden.bs.modal', function() {
+$('#createModal').on('hidden.bs.modal', function() {
+    $('#create-form')[0].reset();
+    $('#create-form .fba-select2').val(null).trigger('change');
+    $('#product-rows').empty();
+    productRowIndex = 0;
+});
+
+$('#editModal').on('hidden.bs.modal', function() {
     const form = $(this).find('form')[0];
     if (form) form.reset();
     $(this).find('.fba-select2').val(null).trigger('change');

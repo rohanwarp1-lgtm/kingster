@@ -2,7 +2,6 @@
 
 namespace App\Modules\FbaAuto\Services;
 
-use App\Modules\FbaAuto\Models\FbaAuto;
 use App\Modules\FbaAuto\Repositories\FbaAutoRepository;
 use Illuminate\Support\Facades\DB;
 use Exception;
@@ -13,26 +12,37 @@ class FbaAutoService
         private FbaAutoRepository $repository
     ) {}
 
-    public function createShipment(array $data): FbaAuto
+    public function createShipment(array $data): array
     {
         return DB::transaction(function () use ($data) {
-            $data['generated_by'] = auth()->id();
-            $data['status'] = 'pending';
+            $header = [
+                'shipment_id'    => $data['shipment_id'],
+                'shipment_date'  => $data['shipment_date'],
+                'state'          => $data['state'],
+                'warehouse_name' => $data['warehouse_name'],
+                'generated_by'   => auth()->id(),
+                'status'         => 'pending',
+            ];
 
-            $shipment = $this->repository->create($data);
+            $shipments = [];
+            foreach ($data['items'] as $item) {
+                $shipments[] = $this->repository->create(array_merge($header, [
+                    'product_name' => $item['product_name'],
+                    'qty'          => $item['qty'],
+                    'qty_price'    => $item['qty_price'],
+                ]));
+            }
 
             activity()
-                ->performedOn($shipment)
                 ->causedBy(auth()->user())
                 ->withProperties([
-                    'shipment_id' => $shipment->shipment_id,
-                    'product_name' => $shipment->product_name,
-                    'qty' => $shipment->qty,
-                    'warehouse' => $shipment->warehouse_name,
+                    'shipment_id'   => $data['shipment_id'],
+                    'item_count'    => count($shipments),
+                    'warehouse'     => $data['warehouse_name'],
                 ])
                 ->log('FBA Shipment created');
 
-            return $shipment;
+            return $shipments;
         });
     }
 
@@ -224,5 +234,30 @@ class FbaAutoService
     public function getFilteredData(array $filters)
     {
         return $this->repository->all($filters);
+    }
+
+    public function find(int $id)
+    {
+        return $this->repository->find($id);
+    }
+
+    public function searchProducts(string $term): array
+    {
+        return $this->repository->searchProducts($term);
+    }
+
+    public function getWarehouses(): array
+    {
+        return $this->repository->getWarehouses();
+    }
+
+    public function getStates(): array
+    {
+        return $this->repository->getStates();
+    }
+
+    public function getProductNames(): array
+    {
+        return $this->repository->getProductNames();
     }
 }
