@@ -25,7 +25,7 @@ class ProductController extends Controller
         $productIds = $request->input('product_indexes', []);
 
         foreach ($productIds as $position => $id) {
-            Product::where('id', $id)->update(['index' => $position + 1]);
+            Product::where('id', $id)->where('is_deleted', 0)->update(['index' => $position + 1]);
         }
         return response()->json(['success' => true, 'message' => 'Product order saved!']);
     }

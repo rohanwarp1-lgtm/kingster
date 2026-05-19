@@ -40,6 +40,12 @@ class WarrantyController extends Controller
                 }
             });
 
+            (clone $query)
+                ->where('warranty_status', 'Active')
+                ->whereNotNull('expiry_date')
+                ->whereDate('expiry_date', '<', Carbon::today())
+                ->update(['warranty_status' => 'Expired']);
+
             $records = $query->orderByDesc('id')->limit(10)->get();
 
             if ($records->isEmpty()) {
