@@ -21,14 +21,15 @@ class FbaAutoController extends Controller
 
     public function index(FbaAutoDataTable $dataTable)
     {
-        return $dataTable->render('admin.modules.fba-auto.index');
+        $warehouses = $this->service->repository->getWarehouses();
+        $states = $this->service->repository->getStates();
+        $productNames = $this->service->repository->getProductNames();
+
+        return $dataTable->render('admin.modules.fba-auto.index', compact('warehouses', 'states', 'productNames'));
     }
 
     public function create()
     {
-        $warehouses = $this->service->repository->getWarehouses();
-        $states = $this->service->repository->getStates();
-        
         return redirect()->route('admin.fba-auto.index');
     }
 

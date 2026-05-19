@@ -42,10 +42,6 @@
                                     <div>{{ $shipment->shipment_date ? $shipment->shipment_date->format('d-M-Y') : '-' }}</div>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <div class="fw-bold">Time</div>
-                                    <div>{{ $shipment->shipment_time ? substr($shipment->shipment_time, 0, 5) : '-' }}</div>
-                                </div>
-                                <div class="col-md-6 mb-3">
                                     <div class="fw-bold">Product</div>
                                     <div>{{ $shipment->product_name ?? '-' }}</div>
                                 </div>

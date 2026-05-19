@@ -5,7 +5,6 @@ namespace App\Modules\FbaAuto\Services;
 use App\Modules\FbaAuto\Models\FbaAuto;
 use App\Modules\FbaAuto\Repositories\FbaAutoRepository;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Exception;
 
 class FbaAutoService
@@ -17,7 +16,6 @@ class FbaAutoService
     public function createShipment(array $data): FbaAuto
     {
         return DB::transaction(function () use ($data) {
-            $data['shipment_id'] = 'FBA-' . strtoupper(Str::random(8));
             $data['generated_by'] = auth()->id();
             $data['status'] = 'pending';
 
@@ -51,7 +49,6 @@ class FbaAutoService
 
             $trackedFields = [
                 'shipment_date',
-                'shipment_time',
                 'product_name',
                 'qty',
                 'state',

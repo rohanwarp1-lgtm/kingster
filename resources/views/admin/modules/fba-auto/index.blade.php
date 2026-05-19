@@ -98,7 +98,6 @@
                                 <th>#</th>
                                 <th>FBA Shipment ID</th>
                                 <th>FBA Shipment Date</th>
-                                <th>Time</th>
                                 <th>Product</th>
                                 <th>Qty</th>
                                 <th>State</th>
@@ -141,7 +140,6 @@ $(function () {
             {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
             {data: 'shipment_id', name: 'shipment_id'},
             {data: 'shipment_date', name: 'shipment_date'},
-            {data: 'shipment_time', name: 'shipment_time'},
             {data: 'product_name', name: 'product_name'},
             {data: 'qty', name: 'qty'},
             {data: 'state', name: 'state'},

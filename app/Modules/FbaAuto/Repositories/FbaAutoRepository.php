@@ -79,6 +79,15 @@ class FbaAutoRepository implements FbaAutoRepositoryInterface
         return $this->model->where('shipment_id', $shipmentId)->first();
     }
 
+    public function getProductNames(): array
+    {
+        return $this->model->whereNotNull('product_name')
+            ->distinct()
+            ->orderBy('product_name')
+            ->pluck('product_name')
+            ->toArray();
+    }
+
     public function getWarehouses(): array
     {
         return $this->model->whereNotNull('warehouse_name')

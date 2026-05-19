@@ -16,7 +16,6 @@ class UpdateFbaAutoRequest extends FormRequest
     {
         return [
             'shipment_date' => ['sometimes', 'required', 'date', 'date_format:Y-m-d'],
-            'shipment_time' => ['sometimes', 'required', 'date_format:H:i'],
             'product_name' => ['sometimes', 'required', 'string', 'max:255'],
             'qty' => ['sometimes', 'required', 'integer', 'min:1'],
             'state' => ['sometimes', 'required', 'string', 'max:100'],

@@ -8,23 +8,13 @@
             <form id="create-form">
                 <div class="modal-body">
                     <div class="form-group mb-3">
-                        <label>FBA Shipment ID</label>
-                        <input type="text" class="form-control" value="Auto generated after save" disabled>
+                        <label>FBA Shipment ID <span class="text-danger">*</span></label>
+                        <input type="text" name="shipment_id" class="form-control" placeholder="e.g. FBA-123456" required>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>FBA Shipment Date <span class="text-danger">*</span></label>
-                                <input type="date" name="shipment_date" class="form-control" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Shipment Time <span class="text-danger">*</span></label>
-                                <input type="time" name="shipment_time" class="form-control" required>
-                            </div>
-                        </div>
+                    <div class="form-group mb-3">
+                        <label>FBA Shipment Date <span class="text-danger">*</span></label>
+                        <input type="date" name="shipment_date" class="form-control" required>
                     </div>
                     <div class="row">
                         <div class="col-md-6">

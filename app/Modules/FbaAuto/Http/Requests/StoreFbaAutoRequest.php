@@ -15,8 +15,8 @@ class StoreFbaAutoRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'shipment_id' => ['required', 'string', 'max:100', 'unique:fba_autos,shipment_id'],
             'shipment_date' => ['required', 'date', 'date_format:Y-m-d'],
-            'shipment_time' => ['required', 'date_format:H:i'],
             'product_name' => ['required', 'string', 'max:255'],
             'qty' => ['required', 'integer', 'min:1'],
             'state' => ['required', 'string', 'max:100'],
@@ -29,8 +29,9 @@ class StoreFbaAutoRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'shipment_id.required' => 'Shipment ID is required',
+            'shipment_id.unique' => 'This Shipment ID already exists',
             'shipment_date.required' => 'Shipment date is required',
-            'shipment_time.required' => 'Shipment time is required',
             'product_name.required' => 'Product name is required',
             'qty.required' => 'Quantity is required',
             'qty.min' => 'Quantity must be at least 1',

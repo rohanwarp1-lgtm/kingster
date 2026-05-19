@@ -12,21 +12,10 @@
             <input type="text" class="form-control" value="{{ $shipment->shipment_id }}" disabled>
         </div>
 
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-group mb-3">
-                    <label>FBA Shipment Date <span class="text-danger">*</span></label>
-                    <input type="date" name="shipment_date" class="form-control"
-                           value="{{ $shipment->shipment_date ? $shipment->shipment_date->format('Y-m-d') : '' }}" required>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="form-group mb-3">
-                    <label>Shipment Time <span class="text-danger">*</span></label>
-                    <input type="time" name="shipment_time" class="form-control"
-                           value="{{ $shipment->shipment_time ? substr($shipment->shipment_time, 0, 5) : '' }}" required>
-                </div>
-            </div>
+        <div class="form-group mb-3">
+            <label>FBA Shipment Date <span class="text-danger">*</span></label>
+            <input type="date" name="shipment_date" class="form-control"
+                   value="{{ $shipment->shipment_date ? $shipment->shipment_date->format('Y-m-d') : '' }}" required>
         </div>
         <div class="row">
             <div class="col-md-6">

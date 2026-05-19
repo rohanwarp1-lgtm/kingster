@@ -12,7 +12,6 @@ return new class extends Migration
             $table->id();
             $table->string('shipment_id')->unique();
             $table->date('shipment_date');
-            $table->time('shipment_time');
             $table->string('product_name');
             $table->unsignedInteger('qty');
             $table->string('state');
