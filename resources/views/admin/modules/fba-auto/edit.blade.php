@@ -39,14 +39,32 @@
             </div>
         </div>
 
-        <div class="row g-3 mb-4">
-            <div class="col-md-4">
-                <label class="form-label">Status</label>
-                <select name="status" class="form-select">
-                    @foreach(['pending','processing','shipped','delivered','closed','cancelled','returned'] as $st)
-                        <option value="{{ $st }}" {{ $shipment->status === $st ? 'selected' : '' }}>{{ ucfirst($st) }}</option>
-                    @endforeach
-                </select>
+        {{-- Status selector --}}
+        @php
+            $statusConfig = [
+                'pending'    => ['label' => 'Pending',    'color' => 'warning',   'icon' => 'fe-clock'],
+                'processing' => ['label' => 'Processing', 'color' => 'info',      'icon' => 'fe-refresh-cw'],
+                'shipped'    => ['label' => 'Shipped',    'color' => 'primary',   'icon' => 'fe-truck'],
+                'delivered'  => ['label' => 'Delivered',  'color' => 'success',   'icon' => 'fe-check-circle'],
+                'closed'     => ['label' => 'Closed',     'color' => 'secondary', 'icon' => 'fe-lock'],
+                'cancelled'  => ['label' => 'Cancelled',  'color' => 'danger',    'icon' => 'fe-x-circle'],
+                'returned'   => ['label' => 'Returned',   'color' => 'dark',      'icon' => 'fe-corner-down-left'],
+            ];
+        @endphp
+        <div class="mb-4">
+            <label class="form-label fw-semibold">Shipment Status</label>
+            <input type="hidden" name="status" id="edit-status-input" value="{{ $shipment->status }}">
+            <div class="d-flex flex-wrap gap-2 mt-1">
+                @foreach($statusConfig as $value => $cfg)
+                <button type="button"
+                    class="btn btn-sm status-badge-btn {{ $shipment->status === $value ? 'btn-'.$cfg['color'] : 'btn-outline-'.$cfg['color'] }}"
+                    data-status="{{ $value }}">
+                    <i class="fe {{ $cfg['icon'] }} me-1"></i>{{ $cfg['label'] }}
+                    @if($shipment->status === $value)
+                        <i class="fe fe-check ms-1"></i>
+                    @endif
+                </button>
+                @endforeach
             </div>
         </div>
 

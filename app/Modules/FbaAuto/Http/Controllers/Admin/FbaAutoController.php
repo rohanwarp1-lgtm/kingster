@@ -8,6 +8,7 @@ use App\Modules\FbaAuto\Services\FbaAutoService;
 use App\Modules\FbaAuto\DataTables\FbaAutoDataTable;
 use App\Modules\FbaAuto\Http\Requests\StoreFbaAutoRequest;
 use App\Modules\FbaAuto\Http\Requests\UpdateFbaAutoRequest;
+use App\Models\ProductName;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -237,10 +238,17 @@ class FbaAutoController extends Controller
 
     public function searchProducts(Request $request): JsonResponse
     {
-        $products = $this->service->searchProducts($request->get('q') ?? '');
+        $term = $request->get('q') ?? '';
 
-        return response()->json([
-            'results' => collect($products)->map(fn($p) => ['id' => $p, 'text' => $p])->values(),
-        ]);
+        $results = ProductName::query()
+            ->where('is_deleted', 0)
+            ->when($term !== '', fn($q) => $q->where('name', 'like', "%{$term}%"))
+            ->orderBy('name')
+            ->limit(50)
+            ->pluck('name')
+            ->map(fn($name) => ['id' => $name, 'text' => $name])
+            ->values();
+
+        return response()->json(['results' => $results]);
     }
 }

@@ -381,6 +381,47 @@ $('#create-form').on('submit', function(e) {
     });
 });
 
+// Status badge selector
+var statusColors = {
+    pending:    'warning',
+    processing: 'info',
+    shipped:    'primary',
+    delivered:  'success',
+    closed:     'secondary',
+    cancelled:  'danger',
+    returned:   'dark'
+};
+var statusIcons = {
+    pending:    'fe-clock',
+    processing: 'fe-refresh-cw',
+    shipped:    'fe-truck',
+    delivered:  'fe-check-circle',
+    closed:     'fe-lock',
+    cancelled:  'fe-x-circle',
+    returned:   'fe-corner-down-left'
+};
+
+$(document).on('click', '.status-badge-btn', function() {
+    var selected = $(this).data('status');
+    $('#edit-status-input').val(selected);
+
+    // Reset all badges
+    $('.status-badge-btn').each(function() {
+        var s = $(this).data('status');
+        var color = statusColors[s];
+        var icon  = statusIcons[s];
+        var label = $(this).text().trim().replace(/\s*✓\s*$/, '').trim();
+        $(this).removeClass('btn-' + color).addClass('btn-outline-' + color);
+        $(this).html('<i class="fe ' + icon + ' me-1"></i>' + s.charAt(0).toUpperCase() + s.slice(1));
+    });
+
+    // Activate selected
+    var color = statusColors[selected];
+    var icon  = statusIcons[selected];
+    $(this).removeClass('btn-outline-' + color).addClass('btn-' + color);
+    $(this).html('<i class="fe ' + icon + ' me-1"></i>' + selected.charAt(0).toUpperCase() + selected.slice(1) + ' <i class="fe fe-check ms-1"></i>');
+});
+
 $(document).on('click', '#add-edit-product-row', function() {
     addEditProductRow();
 });
