@@ -80,15 +80,15 @@ class ModuleController extends Controller
     public function fbaAutoEdit($id)
     {
         $shipment = $this->fbaAutoRepository->find($id);
-        $warehouses = $this->fbaAutoRepository->getWarehouses();
-        $states = $this->fbaAutoRepository->getStates();
-        $productNames = ProductName::query()
-            ->where('is_deleted', 0)
-            ->orderBy('name')
-            ->pluck('name')
-            ->toArray();
+        if (!$shipment) {
+            return response('Shipment not found', 404);
+        }
 
-        return view('admin.modules.fba-auto.edit', compact('shipment', 'warehouses', 'states', 'productNames'));
+        $items      = $this->fbaAutoRepository->getByShipmentId($shipment->shipment_id);
+        $warehouses = $this->fbaAutoRepository->getWarehouses();
+        $states     = $this->fbaAutoRepository->getStates();
+
+        return view('admin.modules.fba-auto.edit', compact('shipment', 'items', 'warehouses', 'states'));
     }
 
     public function fbaAutoShow($id)
@@ -96,20 +96,26 @@ class ModuleController extends Controller
         $shipment = $this->fbaAutoRepository->find($id);
 
         if ($shipment) {
+            $items = $this->fbaAutoRepository->getByShipmentId($shipment->shipment_id);
             $shipment->load(['activities' => fn ($query) => $query->with('causer')->latest()]);
+        } else {
+            $items = collect();
         }
 
-        return view('admin.modules.fba-auto.show', compact('shipment'));
+        return view('admin.modules.fba-auto.show', compact('shipment', 'items'));
     }
 
     public function fbaAutoUpdate(UpdateFbaAutoRequest $request, $id)
     {
         try {
             DB::beginTransaction();
-            $this->fbaAutoService->updateShipment($id, $request->validated());
+            $shipment = $this->fbaAutoRepository->find($id);
+            if (!$shipment) {
+                return response()->json(['success' => false, 'message' => 'Shipment not found'], 404);
+            }
+            $this->fbaAutoService->updateShipmentFull($shipment->shipment_id, $request->validated());
             DB::commit();
-            
-            return response()->json(['success' => true, 'message' => 'Updated successfully']);
+            return response()->json(['success' => true, 'message' => 'Shipment updated successfully']);
         } catch (Exception $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);

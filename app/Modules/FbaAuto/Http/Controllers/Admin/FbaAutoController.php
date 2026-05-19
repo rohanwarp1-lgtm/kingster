@@ -237,7 +237,7 @@ class FbaAutoController extends Controller
 
     public function searchProducts(Request $request): JsonResponse
     {
-        $products = $this->service->searchProducts($request->get('q', ''));
+        $products = $this->service->searchProducts($request->get('q') ?? '');
 
         return response()->json([
             'results' => collect($products)->map(fn($p) => ['id' => $p, 'text' => $p])->values(),

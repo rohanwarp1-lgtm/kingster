@@ -79,6 +79,14 @@ class FbaAutoRepository implements FbaAutoRepositoryInterface
         return $this->model->where('shipment_id', $shipmentId)->first();
     }
 
+    public function getByShipmentId(string $shipmentId): Collection
+    {
+        return $this->model->where('shipment_id', $shipmentId)
+            ->with(['generator', 'updater'])
+            ->orderBy('id')
+            ->get();
+    }
+
     public function getProductNames(): array
     {
         return $this->model->whereNotNull('product_name')
@@ -90,11 +98,13 @@ class FbaAutoRepository implements FbaAutoRepositoryInterface
 
     public function searchProducts(string $term): array
     {
-        return $this->model->whereNotNull('product_name')
-            ->when($term, fn($q) => $q->where('product_name', 'like', "%{$term}%"))
+        return $this->model->newQuery()
+            ->select('product_name')
+            ->whereNotNull('product_name')
+            ->when($term !== '', fn($q) => $q->where('product_name', 'like', "%{$term}%"))
             ->distinct()
             ->orderBy('product_name')
-            ->limit(30)
+            ->limit(50)
             ->pluck('product_name')
             ->toArray();
     }

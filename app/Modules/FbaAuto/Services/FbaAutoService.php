@@ -241,6 +241,70 @@ class FbaAutoService
         return $this->repository->find($id);
     }
 
+    public function getShipmentGroup(string $shipmentId): \Illuminate\Database\Eloquent\Collection
+    {
+        return $this->repository->getByShipmentId($shipmentId);
+    }
+
+    public function updateShipmentFull(string $shipmentId, array $data): bool
+    {
+        return DB::transaction(function () use ($shipmentId, $data) {
+            $existing = $this->repository->getByShipmentId($shipmentId);
+
+            if ($existing->isEmpty()) {
+                throw new Exception('Shipment not found');
+            }
+
+            $first = $existing->first();
+            $header = [
+                'shipment_date'  => $data['shipment_date'],
+                'state'          => $data['state'],
+                'warehouse_name' => $data['warehouse_name'],
+                'status'         => $data['status'] ?? $first->status,
+                'updated_by'     => auth()->id(),
+            ];
+
+            $submittedIds = collect($data['items'])
+                ->pluck('id')
+                ->filter()
+                ->map(fn($id) => (int) $id)
+                ->values()
+                ->toArray();
+
+            // Soft-delete rows removed from the form
+            $existing->each(function ($row) use ($submittedIds) {
+                if (!in_array($row->id, $submittedIds)) {
+                    $row->delete();
+                }
+            });
+
+            // Update existing rows or create new ones
+            foreach ($data['items'] as $item) {
+                $itemData = array_merge($header, [
+                    'product_name' => $item['product_name'],
+                    'qty'          => $item['qty'],
+                    'qty_price'    => $item['qty_price'],
+                ]);
+
+                if (!empty($item['id'])) {
+                    $this->repository->update((int) $item['id'], $itemData);
+                } else {
+                    $this->repository->create(array_merge($itemData, [
+                        'shipment_id'  => $shipmentId,
+                        'generated_by' => $first->generated_by,
+                    ]));
+                }
+            }
+
+            activity()
+                ->causedBy(auth()->user())
+                ->withProperties(['shipment_id' => $shipmentId, 'item_count' => count($data['items'])])
+                ->log('FBA Shipment updated');
+
+            return true;
+        });
+    }
+
     public function searchProducts(string $term): array
     {
         return $this->repository->searchProducts($term);

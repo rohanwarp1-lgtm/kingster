@@ -147,7 +147,7 @@ function addProductRow() {
             <input type="number" name="items[${idx}][qty]" class="form-control form-control-sm" min="1" placeholder="0" required>
         </td>
         <td>
-            <input type="number" name="items[${idx}][qty_price]" class="form-control form-control-sm" step="0.01" min="0" placeholder="0.00" required>
+            <input type="number" name="items[${idx}][qty_price]" class="form-control form-control-sm" step="0.01" min="0" max="1000000000" placeholder="0.00" required>
         </td>
         <td class="text-center">
             <button type="button" class="btn btn-sm btn-outline-danger remove-row-btn" data-row="${idx}">
@@ -166,20 +166,55 @@ function updateRowNumbers() {
     });
 }
 
-function initProductSelect2($el) {
+var editProductRowIndex = 0;
+
+function addEditProductRow() {
+    var idx = 'n' + editProductRowIndex++;
+    var row = `<tr>
+        <td class="text-center row-num"></td>
+        <td>
+            <select name="items[${idx}][product_name]" class="form-select edit-product-select2 w-100" style="width:100%" required>
+                <option value=""></option>
+            </select>
+        </td>
+        <td>
+            <input type="number" name="items[${idx}][qty]" class="form-control form-control-sm" min="1" placeholder="0" required>
+        </td>
+        <td>
+            <input type="number" name="items[${idx}][qty_price]" class="form-control form-control-sm" step="0.01" min="0" max="1000000000" placeholder="0.00" required>
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-danger remove-edit-row-btn">
+                <i class="fe fe-trash-2"></i>
+            </button>
+        </td>
+    </tr>`;
+    $('#edit-product-rows').append(row);
+    initProductSelect2($('#edit-product-rows tr:last .edit-product-select2'), $('#editModal'));
+    updateEditRowNumbers();
+}
+
+function updateEditRowNumbers() {
+    $('#edit-product-rows tr').each(function(i) {
+        $(this).find('.row-num').text(i + 1);
+    });
+}
+
+function initProductSelect2($el, $modal) {
+    $modal = $modal || $('#createModal');
     $el.select2({
         width: '100%',
         placeholder: 'Search or type product name',
         allowClear: true,
         tags: true,
-        dropdownParent: $('#createModal'),
+        dropdownParent: $modal,
         ajax: {
             url: '{{ route('admin.fba-auto.products.search') }}',
             dataType: 'json',
-            delay: 250,
+            delay: 150,
             data: function(params) { return { q: params.term || '' }; },
             processResults: function(data) { return data; },
-            cache: true
+            cache: false
         },
         minimumInputLength: 0,
         createTag: function(params) {
@@ -193,6 +228,15 @@ function initProductSelect2($el) {
             }
             return data.text;
         }
+    });
+
+    $el.on('select2:open', function() {
+        setTimeout(function() {
+            var $searchInput = $('.select2-container--open .select2-search__field');
+            if ($searchInput.length) {
+                $searchInput[0].dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }, 50);
     });
 }
 
@@ -250,6 +294,12 @@ $(document).on('click', '.edit-btn', function() {
         success: function(response) {
             $('#edit-content').html(response);
             initFbaSelect2($('#editModal'));
+            // Init product select2 on existing rows
+            $('#editModal .edit-product-select2').each(function() {
+                initProductSelect2($(this), $('#editModal'));
+            });
+            // Counter starts after existing rows so new row indices don't clash
+            editProductRowIndex = $('#edit-product-rows tr').length;
             $('#editModal').modal('show');
         },
         error: function() {
@@ -331,11 +381,24 @@ $('#create-form').on('submit', function(e) {
     });
 });
 
+$(document).on('click', '#add-edit-product-row', function() {
+    addEditProductRow();
+});
+
+$(document).on('click', '.remove-edit-row-btn', function() {
+    if ($('#edit-product-rows tr').length === 1) {
+        toastr.warning('At least one product row is required');
+        return;
+    }
+    $(this).closest('tr').remove();
+    updateEditRowNumbers();
+});
+
 $(document).on('submit', '#edit-form', function(e) {
     e.preventDefault();
     let id = $('#edit_id').val();
     let formData = new FormData(this);
-    
+
     $.ajax({
         url: `/admin/fba-auto/update/${id}`,
         type: 'POST',
@@ -351,6 +414,14 @@ $(document).on('submit', '#edit-form', function(e) {
             } else {
                 toastr.error(response.message);
             }
+        },
+        error: function(xhr) {
+            let msg = xhr.responseJSON?.message || 'Error occurred';
+            let errors = xhr.responseJSON?.errors;
+            if (errors) {
+                msg = Object.values(errors).flat().join('<br>');
+            }
+            toastr.error(msg);
         }
     });
 });

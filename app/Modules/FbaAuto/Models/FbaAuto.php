@@ -27,7 +27,7 @@ class FbaAuto extends Model
 
     protected $casts = [
         'shipment_date' => 'date',
-        'qty_price' => 'decimal:2',
+        'qty_price' => 'decimal:2', // stored as decimal(15,2) — max ₹9,999,999,999,999.99
         'qty' => 'integer',
     ];
 

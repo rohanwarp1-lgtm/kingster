@@ -22,7 +22,7 @@ class StoreFbaAutoRequest extends FormRequest
             'items'                    => ['required', 'array', 'min:1'],
             'items.*.product_name'     => ['required', 'string', 'max:255'],
             'items.*.qty'              => ['required', 'integer', 'min:1'],
-            'items.*.qty_price'        => ['required', 'numeric', 'min:0'],
+            'items.*.qty_price'        => ['required', 'numeric', 'min:0', 'max:1000000000'],
         ];
     }
 
@@ -40,6 +40,7 @@ class StoreFbaAutoRequest extends FormRequest
             'items.*.qty.required'          => 'Quantity is required',
             'items.*.qty.min'               => 'Quantity must be at least 1',
             'items.*.qty_price.required'    => 'Total amount is required',
+            'items.*.qty_price.max'         => 'Total amount cannot exceed ₹100 crore (₹1,00,00,00,000)',
         ];
     }
 }

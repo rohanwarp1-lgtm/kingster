@@ -1,105 +1,105 @@
 <form id="edit-form">
-    <input type="hidden" id="edit_id" name="id" value="{{ $shipment->id }}">
+    <input type="hidden" id="edit_id" value="{{ $shipment->id }}">
     <div class="modal-body">
-        @php
-            $productOptions = collect($productNames ?? [])->push($shipment->product_name)->filter()->unique()->values();
-            $stateOptions = collect($states ?? [])->push($shipment->state)->filter()->unique()->values();
-            $warehouseOptions = collect($warehouses ?? [])->push($shipment->warehouse_name)->filter()->unique()->values();
-        @endphp
 
-        <div class="form-group mb-3">
-            <label>FBA Shipment ID</label>
-            <input type="text" class="form-control" value="{{ $shipment->shipment_id }}" disabled>
-        </div>
-
-        <div class="form-group mb-3">
-            <label>FBA Shipment Date <span class="text-danger">*</span></label>
-            <input type="date" name="shipment_date" class="form-control"
-                   value="{{ $shipment->shipment_date ? $shipment->shipment_date->format('Y-m-d') : '' }}" required>
-        </div>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-group mb-3">
-                    <label>Product <span class="text-danger">*</span></label>
-                    <select name="product_name" class="form-select fba-select2" data-placeholder="Select or type product" data-tags="1" required>
-                        <option value=""></option>
-                        @foreach($productOptions as $productName)
-                            <option value="{{ $productName }}" {{ $shipment->product_name === $productName ? 'selected' : '' }}>{{ $productName }}</option>
-                        @endforeach
-                    </select>
-                </div>
+        {{-- Shipment header --}}
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <label class="form-label">Shipment ID</label>
+                <input type="text" class="form-control" value="{{ $shipment->shipment_id }}" disabled>
             </div>
-            <div class="col-md-6">
-                <div class="form-group mb-3">
-                    <label>Qty <span class="text-danger">*</span></label>
-                    <input type="number" name="qty" class="form-control" min="1"
-                           value="{{ $shipment->qty }}" required>
-                </div>
+            <div class="col-md-3">
+                <label class="form-label">Shipment Date <span class="text-danger">*</span></label>
+                <input type="date" name="shipment_date" class="form-control"
+                       value="{{ $shipment->shipment_date ? $shipment->shipment_date->format('Y-m-d') : '' }}" required>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-group mb-3">
-                    <label>State <span class="text-danger">*</span></label>
-                    <select name="state" class="form-select fba-select2" data-placeholder="Select state" required>
-                        <option value=""></option>
-                        @foreach($stateOptions as $state)
-                            <option value="{{ $state }}" {{ $shipment->state === $state ? 'selected' : '' }}>{{ $state }}</option>
-                        @endforeach
-                    </select>
-                </div>
+            <div class="col-md-3">
+                <label class="form-label">State <span class="text-danger">*</span></label>
+                @php
+                    $stateOptions = collect($states ?? [])->push($shipment->state)->filter()->unique()->values();
+                @endphp
+                <select name="state" class="form-select fba-select2" data-placeholder="Select or type state" data-tags="1" required>
+                    <option value=""></option>
+                    @foreach($stateOptions as $s)
+                        <option value="{{ $s }}" {{ $shipment->state === $s ? 'selected' : '' }}>{{ $s }}</option>
+                    @endforeach
+                </select>
             </div>
-            <div class="col-md-6">
-                <div class="form-group mb-3">
-                    <label>Warehouse Name <span class="text-danger">*</span></label>
-                    <select name="warehouse_name" class="form-select fba-select2" data-placeholder="Select or type warehouse name" data-tags="1" required>
-                        <option value=""></option>
-                        @foreach($warehouseOptions as $warehouse)
-                            <option value="{{ $warehouse }}" {{ $shipment->warehouse_name === $warehouse ? 'selected' : '' }}>{{ $warehouse }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-group mb-3">
-                    <label>QTY Price (₹) <span class="text-danger">*</span></label>
-                    <input type="number" name="qty_price" class="form-control" step="0.01"
-                           value="{{ $shipment->qty_price }}" required>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="form-group mb-3">
-                    <label>Status</label>
-                    <select name="status" class="form-control">
-                        <option value="pending" {{ $shipment->status === 'pending' ? 'selected' : '' }}>Pending</option>
-                        <option value="processing" {{ $shipment->status === 'processing' ? 'selected' : '' }}>Processing</option>
-                        <option value="shipped" {{ $shipment->status === 'shipped' ? 'selected' : '' }}>Shipped</option>
-                        <option value="delivered" {{ $shipment->status === 'delivered' ? 'selected' : '' }}>Delivered</option>
-                        <option value="closed" {{ $shipment->status === 'closed' ? 'selected' : '' }}>Closed</option>
-                        <option value="cancelled" {{ $shipment->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
-                        <option value="returned" {{ $shipment->status === 'returned' ? 'selected' : '' }}>Returned</option>
-                    </select>
-                </div>
+            <div class="col-md-3">
+                <label class="form-label">Warehouse <span class="text-danger">*</span></label>
+                @php
+                    $warehouseOptions = collect($warehouses ?? [])->push($shipment->warehouse_name)->filter()->unique()->values();
+                @endphp
+                <select name="warehouse_name" class="form-select fba-select2" data-placeholder="Select or type warehouse" data-tags="1" required>
+                    <option value=""></option>
+                    @foreach($warehouseOptions as $w)
+                        <option value="{{ $w }}" {{ $shipment->warehouse_name === $w ? 'selected' : '' }}>{{ $w }}</option>
+                    @endforeach
+                </select>
             </div>
         </div>
 
-        <div class="row border-top pt-3 mt-2">
-            <div class="col-md-6 mb-2">
-                <div class="fw-bold">Generated By</div>
-                <div>{{ $shipment->generator->username ?? $shipment->generator->name ?? 'System' }}</div>
-                <small class="text-muted">{{ $shipment->created_at ? $shipment->created_at->format('d-M-Y H:i') : '-' }}</small>
-            </div>
-            <div class="col-md-6 mb-2">
-                <div class="fw-bold">Last Updated By</div>
-                <div>{{ $shipment->updater->username ?? $shipment->updater->name ?? '-' }}</div>
-                <small class="text-muted">{{ $shipment->updater && $shipment->updated_at ? $shipment->updated_at->format('d-M-Y H:i') : '-' }}</small>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select">
+                    @foreach(['pending','processing','shipped','delivered','closed','cancelled','returned'] as $st)
+                        <option value="{{ $st }}" {{ $shipment->status === $st ? 'selected' : '' }}>{{ ucfirst($st) }}</option>
+                    @endforeach
+                </select>
             </div>
         </div>
+
+        {{-- Product rows --}}
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0 fw-semibold">Products</h6>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="add-edit-product-row">
+                <i class="fe fe-plus"></i> Add Row
+            </button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:40px">#</th>
+                        <th>Product</th>
+                        <th style="width:110px">Qty</th>
+                        <th style="width:160px">Total Amount (₹)</th>
+                        <th style="width:46px"></th>
+                    </tr>
+                </thead>
+                <tbody id="edit-product-rows">
+                    @foreach($items as $idx => $item)
+                    <tr>
+                        <td class="text-center row-num">{{ $idx + 1 }}</td>
+                        <td>
+                            <input type="hidden" name="items[{{ $idx }}][id]" value="{{ $item->id }}">
+                            <select name="items[{{ $idx }}][product_name]" class="form-select edit-product-select2 w-100" style="width:100%" required>
+                                <option value="{{ $item->product_name }}" selected>{{ $item->product_name }}</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="number" name="items[{{ $idx }}][qty]" class="form-control form-control-sm"
+                                   min="1" value="{{ $item->qty }}" required>
+                        </td>
+                        <td>
+                            <input type="number" name="items[{{ $idx }}][qty_price]" class="form-control form-control-sm"
+                                   step="0.01" min="0" max="1000000000" value="{{ $item->qty_price }}" required>
+                        </td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-edit-row-btn">
+                                <i class="fe fe-trash-2"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="submit" class="btn btn-primary">Update</button>
+        <button type="submit" class="btn btn-primary">Update Shipment</button>
     </div>
 </form>
