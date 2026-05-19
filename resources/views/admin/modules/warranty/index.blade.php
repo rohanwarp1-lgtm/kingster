@@ -118,7 +118,7 @@
     </div>
 </div>
 
-@include('warranty::partials.modals')
+@include('admin.modules.warranty.partials.modals')
 @endsection
 
 @push('scripts')

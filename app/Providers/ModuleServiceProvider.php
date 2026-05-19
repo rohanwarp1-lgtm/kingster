@@ -45,19 +45,5 @@ class ModuleServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        $modules = [
-            'FbaAuto' => 'fba-auto',
-            'Warranty' => 'warranty',
-            'Rma' => 'rma',
-            'ReturnReport' => 'return-report',
-        ];
-        
-        foreach ($modules as $module => $namespace) {
-            $modulePath = module_path($module);
-
-            if (is_dir($modulePath . '/Resources/views')) {
-                $this->loadViewsFrom($modulePath . '/Resources/views', $namespace);
-            }
-        }
     }
 }

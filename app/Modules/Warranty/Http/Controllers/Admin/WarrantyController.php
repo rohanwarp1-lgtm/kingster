@@ -19,12 +19,12 @@ class WarrantyController extends Controller
 
     public function index(WarrantyDataTable $dataTable)
     {
-        return $dataTable->render('warranty::index');
+        return $dataTable->render('admin.modules.warranty.index');
     }
 
     public function create()
     {
-        return view('warranty::create');
+        return redirect()->route('admin.warranty.index');
     }
 
     public function store(StoreWarrantyRequest $request): JsonResponse
@@ -63,7 +63,7 @@ class WarrantyController extends Controller
             abort(404, 'Warranty not found');
         }
         
-        return view('warranty::show', compact('warranty'));
+        return view('admin.modules.warranty.show', compact('warranty'));
     }
 
     public function startReview(int $id): JsonResponse

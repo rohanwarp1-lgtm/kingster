@@ -46,7 +46,7 @@ class FbaAutoDataTable extends DataTable
                 return $row->generator->name ?? 'N/A';
             })
             ->addColumn('actions', function ($row) {
-                return view('fba-auto::partials.actions', ['row' => $row])->render();
+                return view('admin.modules.fba-auto.partials.actions', ['row' => $row])->render();
             })
             ->rawColumns(['checkbox', 'shipment_id', 'product_name', 'warehouse', 'qty', 'status', 'actions']);
     }

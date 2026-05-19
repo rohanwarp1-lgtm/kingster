@@ -19,12 +19,12 @@ class RmaController extends Controller
 
     public function index(RmaTicketDataTable $dataTable)
     {
-        return $dataTable->render('rma::index');
+        return $dataTable->render('admin.modules.rma.index');
     }
 
     public function create()
     {
-        return view('rma::create');
+        return redirect()->route('admin.rma.index');
     }
 
     public function store(StoreRmaTicketRequest $request): JsonResponse
@@ -63,7 +63,7 @@ class RmaController extends Controller
             abort(404, 'Ticket not found');
         }
         
-        return view('rma::show', compact('ticket'));
+        return view('admin.modules.rma.show', compact('ticket'));
     }
 
     public function updateStatus(Request $request, int $id): JsonResponse

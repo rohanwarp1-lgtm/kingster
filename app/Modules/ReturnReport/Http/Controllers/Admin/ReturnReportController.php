@@ -22,7 +22,7 @@ class ReturnReportController extends Controller
 
     public function index(ReturnReportDataTable $dataTable)
     {
-        return $dataTable->render('return-report::index');
+        return $dataTable->render('admin.modules.return-report.index');
     }
 
     public function create()
@@ -30,7 +30,7 @@ class ReturnReportController extends Controller
         $warehouses = $this->repository->getWarehouses();
         $reasons = $this->repository->getReturnReasons();
         
-        return view('return-report::create', compact('warehouses', 'reasons'));
+        return redirect()->route('admin.return-report.index');
     }
 
     public function store(StoreReturnReportRequest $request): JsonResponse
@@ -60,7 +60,7 @@ class ReturnReportController extends Controller
             abort(404, 'Report not found');
         }
         
-        return view('return-report::show', compact('report'));
+        return view('admin.modules.return-report.show', compact('report'));
     }
 
     public function dashboard(Request $request): JsonResponse

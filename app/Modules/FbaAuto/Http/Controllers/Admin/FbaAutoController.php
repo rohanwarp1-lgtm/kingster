@@ -21,7 +21,7 @@ class FbaAutoController extends Controller
 
     public function index(FbaAutoDataTable $dataTable)
     {
-        return $dataTable->render('fba-auto::index');
+        return $dataTable->render('admin.modules.fba-auto.index');
     }
 
     public function create()
@@ -29,7 +29,7 @@ class FbaAutoController extends Controller
         $warehouses = $this->service->repository->getWarehouses();
         $states = $this->service->repository->getStates();
         
-        return view('fba-auto::create', compact('warehouses', 'states'));
+        return redirect()->route('admin.fba-auto.index');
     }
 
     public function store(StoreFbaAutoRequest $request): JsonResponse
@@ -68,7 +68,7 @@ class FbaAutoController extends Controller
         $warehouses = $this->service->repository->getWarehouses();
         $states = $this->service->repository->getStates();
         
-        return view('fba-auto::edit', compact('shipment', 'warehouses', 'states'));
+        return view('admin.modules.fba-auto.edit', compact('shipment', 'warehouses', 'states'));
     }
 
     public function update(UpdateFbaAutoRequest $request, int $id): JsonResponse

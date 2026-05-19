@@ -120,7 +120,7 @@
     </div>
 </div>
 
-@include('fba-auto::partials.modals')
+@include('admin.modules.fba-auto.partials.modals')
 @endsection
 
 @push('scripts')

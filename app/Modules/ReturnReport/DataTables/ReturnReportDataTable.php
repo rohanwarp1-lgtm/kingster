@@ -53,7 +53,7 @@ class ReturnReportDataTable extends DataTable
                 return $row->created_at->format('d M Y');
             })
             ->addColumn('actions', function ($row) {
-                return view('return-report::partials.actions', ['row' => $row])->render();
+                return view('admin.modules.return-report.partials.actions', ['row' => $row])->render();
             })
             ->rawColumns(['order_id', 'product', 'marketplace', 'return_reason', 'refund_status', 'loss_amount', 'warehouse', 'actions']);
     }

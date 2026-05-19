@@ -119,7 +119,7 @@
     </div>
 </div>
 
-@include('return-report::partials.modals')
+@include('admin.modules.return-report.partials.modals')
 @endsection
 
 @push('scripts')

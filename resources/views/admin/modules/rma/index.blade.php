@@ -119,7 +119,7 @@
     </div>
 </div>
 
-@include('rma::partials.modals')
+@include('admin.modules.rma.partials.modals')
 @endsection
 
 @push('scripts')

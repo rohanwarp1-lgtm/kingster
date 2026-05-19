@@ -44,7 +44,7 @@ class RmaTicketDataTable extends DataTable
                 return $row->status_badge;
             })
             ->addColumn('actions', function ($row) {
-                return view('rma::partials.actions', ['row' => $row])->render();
+                return view('admin.modules.rma.partials.actions', ['row' => $row])->render();
             })
             ->rawColumns(['ticket_id', 'customer', 'product', 'platform', 'issue_type', 'assigned_to', 'sla', 'status', 'actions']);
     }

@@ -45,7 +45,7 @@ class WarrantyDataTable extends DataTable
                 return $row->status_badge;
             })
             ->addColumn('actions', function ($row) {
-                return view('warranty::partials.actions', ['row' => $row])->render();
+                return view('admin.modules.warranty.partials.actions', ['row' => $row])->render();
             })
             ->rawColumns(['ticket_no', 'customer_name', 'product', 'purchase_info', 'warranty_type', 'expiry_date', 'status', 'actions']);
     }
