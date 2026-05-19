@@ -185,7 +185,7 @@ $('#action-form').on('submit', function(e) {
     $.ajax({
         url: url,
         type: 'POST',
-        data: {notes: notes},
+        data: action === 'approve' ? {notes: notes} : {reason: notes},
         headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')},
         success: function(response) {
             toastr.success(response.message);

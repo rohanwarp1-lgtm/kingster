@@ -136,6 +136,7 @@ Route::middleware(['auth', \App\Http\Middleware\AutoMigrate::class])->prefix('ad
         Route::get('fba-auto', [ModuleController::class, 'fbaAutoIndex'])->name('admin.fba-auto.index');
         Route::get('fba-auto/create', [ModuleController::class, 'fbaAutoCreate'])->name('admin.fba-auto.create');
         Route::post('fba-auto/store', [ModuleController::class, 'fbaAutoStore'])->name('admin.fba-auto.store');
+        Route::get('fba-auto/show/{id}', [ModuleController::class, 'fbaAutoShow'])->name('admin.fba-auto.show');
         Route::get('fba-auto/edit/{id}', [ModuleController::class, 'fbaAutoEdit'])->name('admin.fba-auto.edit');
         Route::post('fba-auto/update/{id}', [ModuleController::class, 'fbaAutoUpdate'])->name('admin.fba-auto.update');
         Route::delete('fba-auto/delete/{id}', [ModuleController::class, 'fbaAutoDelete'])->name('admin.fba-auto.destroy');

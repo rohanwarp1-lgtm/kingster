@@ -12,6 +12,32 @@ $.ajaxSetup({
 });
 
 // ─── DataTables helper ────────────────────────────────────────────────────────
+if ($.fn.dataTable) {
+    $.extend(true, $.fn.dataTable.defaults, {
+        scrollX   : true,
+        autoWidth : false
+    });
+
+    $(document).on('init.dt', function (e, settings) {
+        var $wrapper = $(settings.nTableWrapper);
+        var $shell = $wrapper.parent('.table-responsive');
+
+        if ($shell.length) {
+            var $extraNodes = $shell.contents().filter(function () {
+                return this !== $wrapper[0];
+            });
+
+            $wrapper.insertBefore($shell);
+            if ($extraNodes.length) {
+                $extraNodes.insertAfter($wrapper);
+            }
+            $shell.remove();
+        }
+
+        $wrapper.find('.dataTables_scrollBody').attr('tabindex', '0');
+    });
+}
+
 function makeDataTable(tableId, ajaxUrl, columns, extraData, filterIds) {
     if (!$(tableId).length) return null;
 
@@ -126,9 +152,14 @@ $(document).ready(function () {
     );
 
     // ── Sidebar Toggle ────────────────────────────────────────────────────────
+    function syncSidebarToggleState() {
+        $('#toggle_btn').attr('aria-expanded', !$('body').hasClass('mini-sidebar'));
+    }
+
     $(document).on('click', '#toggle_btn', function () {
         $('body').toggleClass('mini-sidebar');
         localStorage.setItem('sidebar-mini', $('body').hasClass('mini-sidebar'));
+        syncSidebarToggleState();
         return false;
     });
     $(document).on('mouseenter', '.sidebar', function () {
@@ -138,6 +169,7 @@ $(document).ready(function () {
         if ($('body').hasClass('mini-sidebar')) $('body').removeClass('expand-menu');
     });
     if (localStorage.getItem('sidebar-mini') === 'true') $('body').addClass('mini-sidebar');
+    syncSidebarToggleState();
 
     // ── Password visibility toggle ────────────────────────────────────────────
     $(document).on('click', '#togglePassword', function () {

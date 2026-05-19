@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'FBA Auto Management')
+@section('title', 'FBA Shipment')
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('admin_assets/css/datatables.min.css') }}">
@@ -11,7 +11,7 @@
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">
-            <i class="bi bi-truck"></i> FBA Auto Management
+            <i class="bi bi-truck"></i> FBA Shipment
         </h1>
         <div>
             <button type="button" class="btn btn-primary" onclick="openCreateModal()">

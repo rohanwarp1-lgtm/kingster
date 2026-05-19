@@ -24,7 +24,7 @@
                     <ul style="display: none;">
                         <li>
                             <a href="{{ route('admin.fba-auto.index') }}">
-                                <i class="fe fe-truck"></i> FBA Auto
+                                <i class="fe fe-truck"></i> FBA Shipment
                             </a>
                         </li>
                         <li>

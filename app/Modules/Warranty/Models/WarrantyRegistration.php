@@ -6,12 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Notifications\Notifiable;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
 class WarrantyRegistration extends Model
 {
-    use SoftDeletes, LogsActivity;
+    use SoftDeletes, LogsActivity, Notifiable;
 
     protected $fillable = [
         'ticket_no',
@@ -48,8 +49,8 @@ class WarrantyRegistration extends Model
         static::creating(function ($warranty) {
             $warranty->ticket_no = 'WARR-' . strtoupper(uniqid());
             
-            if (!$warranty->expiry_date) {
-                $warranty->expiry_date = $warranty->purchase_date->addYear();
+            if (!$warranty->expiry_date && $warranty->purchase_date) {
+                $warranty->expiry_date = $warranty->purchase_date->copy()->addYear();
             }
             
             if (!$warranty->warranty_type) {

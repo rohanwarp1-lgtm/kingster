@@ -78,7 +78,8 @@ class UserController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => $isEdit ? 'User updated successfully!' : 'User created successfully!'
+            'message' => $isEdit ? 'User updated successfully!' : 'User created successfully!',
+            'id' => $user->id,
         ]);
     }
 

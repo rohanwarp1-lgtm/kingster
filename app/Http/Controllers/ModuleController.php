@@ -21,6 +21,7 @@ use App\Modules\FbaAuto\Models\FbaAuto;
 use App\Modules\Warranty\Models\WarrantyRegistration;
 use App\Modules\Rma\Models\RmaTicket;
 use App\Modules\ReturnReport\Models\ReturnReport;
+use App\Models\ProductName;
 use Illuminate\Support\Facades\DB;
 use Exception;
 
@@ -38,18 +39,24 @@ class ModuleController extends Controller
         private ReturnReportRepository $returnReportRepository
     ) {}
 
-    // FBA AUTO MODULE
+    // FBA Shipment MODULE
     public function fbaAutoIndex()
     {
         $stats = $this->fbaAutoService->getDashboardStats();
-        return view('admin.modules.fba-auto.index', ['stats' => $stats]);
+        $states = $this->fbaAutoRepository->getStates();
+        $warehouses = $this->fbaAutoRepository->getWarehouses();
+        $productNames = ProductName::query()
+            ->where('is_deleted', 0)
+            ->orderBy('name')
+            ->pluck('name')
+            ->toArray();
+
+        return view('admin.modules.fba-auto.index', compact('stats', 'states', 'warehouses', 'productNames'));
     }
 
     public function fbaAutoCreate()
     {
-        $warehouses = $this->fbaAutoRepository->getWarehouses();
-        $states = $this->fbaAutoRepository->getStates();
-        return view('admin.modules.fba-auto.create', compact('warehouses', 'states'));
+        return redirect()->route('admin.fba-auto.index');
     }
 
     public function fbaAutoStore(StoreFbaAutoRequest $request)
@@ -75,7 +82,24 @@ class ModuleController extends Controller
         $shipment = $this->fbaAutoRepository->find($id);
         $warehouses = $this->fbaAutoRepository->getWarehouses();
         $states = $this->fbaAutoRepository->getStates();
-        return view('admin.modules.fba-auto.edit', compact('shipment', 'warehouses', 'states'));
+        $productNames = ProductName::query()
+            ->where('is_deleted', 0)
+            ->orderBy('name')
+            ->pluck('name')
+            ->toArray();
+
+        return view('admin.modules.fba-auto.edit', compact('shipment', 'warehouses', 'states', 'productNames'));
+    }
+
+    public function fbaAutoShow($id)
+    {
+        $shipment = $this->fbaAutoRepository->find($id);
+
+        if ($shipment) {
+            $shipment->load(['activities' => fn ($query) => $query->with('causer')->latest()]);
+        }
+
+        return view('admin.modules.fba-auto.show', compact('shipment'));
     }
 
     public function fbaAutoUpdate(UpdateFbaAutoRequest $request, $id)
@@ -114,18 +138,29 @@ class ModuleController extends Controller
 
     public function fbaAutoAjax(Request $request)
     {
-        $query = FbaAuto::query()->select('fba_autos.*');
+        $query = FbaAuto::query()
+            ->with(['generator', 'updater'])
+            ->select('fba_autos.*');
 
         return datatables()
             ->eloquent($query)
             ->addIndexColumn()
-            ->addColumn('shipment_date', fn ($row) => optional($row->shipment_date)->format('Y-m-d'))
+            ->addColumn('shipment_id', fn ($row) => '<strong>'.e($row->shipment_id).'</strong>')
+            ->addColumn('shipment_date', fn ($row) => optional($row->shipment_date)->format('d-M-Y'))
+            ->addColumn('shipment_time', fn ($row) => $row->shipment_time ? substr($row->shipment_time, 0, 5) : '-')
+            ->addColumn('warehouse_name', fn ($row) => '<span class="badge bg-primary">'.e($row->warehouse_name).'</span>')
+            ->addColumn('qty_price', fn ($row) => $row->formatted_price)
+            ->addColumn('generated_by', fn ($row) => e($row->generator->username ?? $row->generator->name ?? 'System'))
+            ->addColumn('generated_at', fn ($row) => optional($row->created_at)->format('d-M-Y H:i'))
+            ->addColumn('updated_by', fn ($row) => $row->updater ? e($row->updater->username ?? $row->updater->name ?? 'System') : '-')
+            ->addColumn('updated_at', fn ($row) => $row->updater ? optional($row->updated_at)->format('d-M-Y H:i') : '-')
             ->addColumn('status', fn ($row) => $row->status_badge)
             ->addColumn('action', fn ($row) =>
-                '<button class="btn btn-sm btn-info edit-btn me-1" data-id="'.$row->id.'"><i class="fe fe-edit"></i></button>'.
+                '<a href="'.route('admin.fba-auto.show', $row->id).'" class="btn btn-sm btn-info me-1 text-white" title="View history"><i class="fe fe-eye"></i></a>'.
+                '<button class="btn btn-sm btn-primary edit-btn me-1" data-id="'.$row->id.'" title="Edit"><i class="fe fe-edit"></i></button>'.
                 '<button class="btn btn-sm btn-danger delete-btn" data-id="'.$row->id.'"><i class="fe fe-trash-2"></i></button>'
             )
-            ->rawColumns(['status', 'action'])
+            ->rawColumns(['shipment_id', 'warehouse_name', 'status', 'action'])
             ->make(true);
     }
 
@@ -143,7 +178,7 @@ class ModuleController extends Controller
 
     public function warrantyCreate()
     {
-        return view('admin.modules.warranty.create');
+        return redirect()->route('admin.warranty.index');
     }
 
     public function warrantyStore(StoreWarrantyRequest $request)
@@ -183,7 +218,7 @@ class ModuleController extends Controller
     public function warrantyReject(Request $request, $id)
     {
         try {
-            $this->warrantyService->reject($id, $request->reason);
+            $this->warrantyService->reject($id, $request->input('reason', $request->input('notes', 'Rejected by admin')));
             return response()->json(['success' => true, 'message' => 'Rejected successfully']);
         } catch (Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
@@ -211,7 +246,7 @@ class ModuleController extends Controller
             ->addColumn('expiry_date', fn ($row) => optional($row->expiry_date)->format('Y-m-d'))
             ->addColumn('status', fn ($row) => $row->status_badge)
             ->addColumn('action', fn ($row) =>
-                '<a href="/admin/warranty/show/'.$row->id.'" class="btn btn-sm btn-info me-1"><i class="fe fe-eye"></i></a>'.
+                '<a href="/admin/warranty/show/'.$row->id.'" class="btn btn-sm btn-info me-1 text-white"><i class="fe fe-eye"></i></a>'.
                 '<button class="btn btn-sm btn-success approve-btn me-1" data-id="'.$row->id.'"><i class="fe fe-check"></i></button>'.
                 '<button class="btn btn-sm btn-warning reject-btn me-1" data-id="'.$row->id.'"><i class="fe fe-x"></i></button>'.
                 '<button class="btn btn-sm btn-danger delete-btn" data-id="'.$row->id.'"><i class="fe fe-trash-2"></i></button>'
@@ -234,7 +269,7 @@ class ModuleController extends Controller
 
     public function rmaCreate()
     {
-        return view('admin.modules.rma.create');
+        return redirect()->route('admin.rma.index');
     }
 
     public function rmaStore(StoreRmaTicketRequest $request)
@@ -315,8 +350,8 @@ class ModuleController extends Controller
             ->addColumn('sla_deadline', fn ($row) => optional($row->sla_deadline)->format('Y-m-d H:i'))
             ->addColumn('status', fn ($row) => $row->status_badge)
             ->addColumn('action', fn ($row) =>
-                '<a href="/admin/rma/show/'.$row->id.'" class="btn btn-sm btn-info me-1"><i class="fe fe-eye"></i></a>'.
-                '<button class="btn btn-sm btn-warning status-btn me-1" data-id="'.$row->id.'"><i class="fe fe-edit"></i></button>'.
+                '<a href="/admin/rma/show/'.$row->id.'" class="btn btn-sm btn-info me-1 text-white"><i class="fe fe-eye"></i></a>'.
+                '<button class="btn btn-sm btn-warning status-btn me-1 text-white" data-id="'.$row->id.'"><i class="fe fe-edit"></i></button>'.
                 '<button class="btn btn-sm btn-danger delete-btn" data-id="'.$row->id.'"><i class="fe fe-trash-2"></i></button>'
             )
             ->rawColumns(['status', 'action'])
@@ -336,9 +371,7 @@ class ModuleController extends Controller
 
     public function returnReportCreate()
     {
-        $warehouses = $this->returnReportRepository->getWarehouses();
-        $reasons = $this->returnReportRepository->getReturnReasons();
-        return view('admin.modules.return-report.create', compact('warehouses', 'reasons'));
+        return redirect()->route('admin.return-report.index');
     }
 
     public function returnReportStore(StoreReturnReportRequest $request)
@@ -403,7 +436,7 @@ class ModuleController extends Controller
             ->eloquent($query)
             ->addIndexColumn()
             ->addColumn('action', fn ($row) =>
-                '<a href="/admin/return-report/show/'.$row->id.'" class="btn btn-sm btn-info me-1"><i class="fe fe-eye"></i></a>'.
+                '<a href="/admin/return-report/show/'.$row->id.'" class="btn btn-sm btn-info me-1 text-white"><i class="fe fe-eye"></i></a>'.
                 '<button class="btn btn-sm btn-danger delete-btn" data-id="'.$row->id.'"><i class="fe fe-trash-2"></i></button>'
             )
             ->rawColumns(['action'])

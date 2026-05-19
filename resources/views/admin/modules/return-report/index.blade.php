@@ -15,7 +15,10 @@
                         <li class="breadcrumb-item active">Return Report</li>
                     </ul>
                 </div>
-                <div class="col-auto">
+                <div class="col-auto d-flex gap-2">
+                    <button type="button" class="btn btn-primary" onclick="openCreateModal()">
+                        <i class="fe fe-plus"></i> Add Return
+                    </button>
                     <button type="button" class="btn btn-success" onclick="exportReport('excel')">
                         <i class="fe fe-download"></i> Export
                     </button>
@@ -121,6 +124,10 @@
 
 @push('scripts')
 <script>
+function openCreateModal() {
+    $('#createModal').modal('show');
+}
+
 $(document).ready(function() {
     loadDashboardData();
 

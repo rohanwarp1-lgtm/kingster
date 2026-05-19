@@ -49,16 +49,42 @@ class FbaAutoService
                 throw new Exception('Shipment not found');
             }
 
+            $trackedFields = [
+                'shipment_date',
+                'shipment_time',
+                'product_name',
+                'qty',
+                'state',
+                'warehouse_name',
+                'qty_price',
+                'status',
+            ];
+            $before = $oldShipment->only($trackedFields);
+
             $updated = $this->repository->update($id, $data);
 
             if ($updated) {
                 $shipment = $this->repository->find($id);
+                $after = $shipment->only($trackedFields);
+                $changes = [];
+
+                foreach ($trackedFields as $field) {
+                    $oldValue = $before[$field] ?? null;
+                    $newValue = $after[$field] ?? null;
+
+                    if ((string) $oldValue !== (string) $newValue) {
+                        $changes[$field] = [
+                            'old' => $oldValue,
+                            'new' => $newValue,
+                        ];
+                    }
+                }
                 
                 activity()
                     ->performedOn($shipment)
                     ->causedBy(auth()->user())
                     ->withProperties([
-                        'changes' => $shipment->getChanges(),
+                        'changes' => $changes,
                     ])
                     ->log('FBA Shipment updated');
             }
@@ -88,6 +114,8 @@ class FbaAutoService
             ]);
 
             if ($updated) {
+                $shipment->refresh();
+
                 activity()
                     ->performedOn($shipment)
                     ->causedBy(auth()->user())

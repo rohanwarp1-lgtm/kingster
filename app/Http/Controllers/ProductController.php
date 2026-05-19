@@ -76,6 +76,8 @@ class ProductController extends Controller
 
     public function saveProduct(Request $request){
 
+        $isNewProduct = !$request->id;
+
         if ($request->id) {
             $product = Product::find($request->id);
             if (!$product) {
@@ -84,6 +86,8 @@ class ProductController extends Controller
         } else {
             $product = new Product();
             $product->created_by = Auth::id();
+            $product->status = 1;
+            $product->is_deleted = 0;
         }
 
         $product->product_name = $request->product_name;
@@ -153,15 +157,16 @@ class ProductController extends Controller
 
         $product->save();
 
-        $saveIndex = Product::find($product->id);
-        $saveIndex->index = $product->id;
-        $saveIndex->save();
+        if ($isNewProduct) {
+            $product->index = $product->id;
+            $product->save();
+        }
 
         $action = $request->id ? 'updated' : 'created';
         activity('product')->causedBy(auth()->user())->performedOn($product)->withProperties(['name' => $product->product_name])->log($action);
 
         $msg = $request->id ? 'Product updated successfully!' : 'Product saved successfully!';
-        return response()->json(['status' => 1, 'success' => true, 'message' => $msg]);
+        return response()->json(['status' => 1, 'success' => true, 'message' => $msg, 'id' => $product->id]);
     }
 
     public function productAjax(Request $request) {
@@ -360,7 +365,7 @@ class ProductController extends Controller
         $productName->save();
 
         $msg = $request->product_name_id ? 'Product name updated successfully!' : 'Product name saved successfully!';
-        return response()->json(['status' => 1, 'success' => true, 'message' => $msg]);
+        return response()->json(['status' => 1, 'success' => true, 'message' => $msg, 'id' => $productName->id]);
     }
 
     public function productNameAjax(Request $request) {

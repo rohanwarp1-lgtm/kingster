@@ -3,9 +3,11 @@
 namespace App\Modules\FbaAuto\Repositories;
 
 use App\Modules\FbaAuto\Models\FbaAuto;
+use App\Modules\FbaAuto\Models\FbaState;
 use App\Modules\FbaAuto\Interfaces\FbaAutoRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Schema;
 
 class FbaAutoRepository implements FbaAutoRepositoryInterface
 {
@@ -87,8 +89,21 @@ class FbaAutoRepository implements FbaAutoRepositoryInterface
 
     public function getStates(): array
     {
+        if (Schema::hasTable('fba_states')) {
+            $states = FbaState::query()
+                ->active()
+                ->ordered()
+                ->pluck('name')
+                ->toArray();
+
+            if (!empty($states)) {
+                return $states;
+            }
+        }
+
         return $this->model->whereNotNull('state')
             ->distinct()
+            ->orderBy('state')
             ->pluck('state')
             ->toArray();
     }

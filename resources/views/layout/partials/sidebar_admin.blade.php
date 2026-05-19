@@ -1,10 +1,8 @@
 <div class="sidebar" id="sidebar">
     <div class="header-left">
         <a href="{{ route('admin.warranty.management') }}" class="logo">
+            <span class="logo-icon">K</span>
             <span class="logo-text">KINGSTER</span>
-        </a>
-        <a href="javascript:void(0);" id="toggle_btn">
-            <i class="fe fe-menu"></i>
         </a>
     </div>
     <div class="sidebar-inner slimscroll">
@@ -20,7 +18,7 @@
                 <li class="menu-title"><span>Modules</span></li>
                 <li class="{{ Route::is('admin.fba-auto.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.fba-auto.index') }}">
-                        <i class="fe fe-truck"></i> <span>FBA Auto</span>
+                        <i class="fe fe-truck"></i> <span>FBA Shipment</span>
                     </a>
                 </li>
                 <li class="{{ Route::is('admin.warranty.index') ? 'active' : '' }}">
@@ -65,16 +63,6 @@
                 <li class="{{ Route::is('admin.activity.log') ? 'active' : '' }}">
                     <a href="{{ route('admin.activity.log') }}">
                         <i class="fe fe-activity"></i> <span>Activity Log</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('index-3') }}" target="_blank">
-                        <i class="fe fe-external-link"></i> <span>Visit Site</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('signout') }}">
-                        <i class="fe fe-log-out"></i> <span>Logout</span>
                     </a>
                 </li>
             </ul>

@@ -39,7 +39,7 @@ class FbaAuto extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->useLogName('FBA Auto')
+            ->useLogName('FBA Shipment')
             ->logOnlyDirty()
             ->logFillable();
     }
