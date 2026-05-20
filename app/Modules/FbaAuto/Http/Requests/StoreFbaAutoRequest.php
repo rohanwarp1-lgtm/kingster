@@ -17,6 +17,7 @@ class StoreFbaAutoRequest extends FormRequest
         return [
             'shipment_id'              => ['required', 'string', 'max:100', 'unique:fba_autos,shipment_id'],
             'shipment_date'            => ['required', 'date', 'date_format:Y-m-d'],
+            'shipment_time'            => ['required', 'date_format:H:i'],
             'state'                    => ['required', 'string', 'max:100'],
             'warehouse_name'           => ['required', 'string', 'max:255'],
             'items'                    => ['required', 'array', 'min:1'],
@@ -32,6 +33,8 @@ class StoreFbaAutoRequest extends FormRequest
             'shipment_id.required'          => 'Shipment ID is required',
             'shipment_id.unique'            => 'This Shipment ID already exists',
             'shipment_date.required'        => 'Shipment date is required',
+            'shipment_time.required'        => 'Shipment time is required',
+            'shipment_time.date_format'     => 'Shipment time must be in HH:MM format',
             'state.required'                => 'State is required',
             'warehouse_name.required'       => 'Warehouse name is required',
             'items.required'                => 'At least one product row is required',

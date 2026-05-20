@@ -79,7 +79,7 @@ Route::get('store-warranty', [WarrantyController::class, 'save'])->name('store.w
 
 Route::get('signout', [CustomAuthController::class, 'signOut'])->name('signout');
 Route::get('login', function () { return view('login'); })->name('login');
-Route::get('admin', function () { return view('login'); })->name('login');
+Route::get('admin', function () { return view('login'); });
 Route::post('ajax-login', [CustomAuthController::class, 'loginProcess'])->name('ajax.login');
 
 
@@ -125,6 +125,9 @@ Route::middleware(['auth', \App\Http\Middleware\AutoMigrate::class])->prefix('ad
 
         Route::get('general-settings', [GeneralSettingController::class, 'index'])->name('general.setting');
         Route::post('general-setting-save', [GeneralSettingController::class, 'save'])->name('general.setting.save');
+
+        Route::get('replacement-policy-editor', [GeneralSettingController::class, 'replacementPolicy'])->name('admin.replacement.policy');
+        Route::post('replacement-policy-save', [GeneralSettingController::class, 'saveReplacementPolicy'])->name('admin.replacement.policy.save');
 
         Route::get('migrate-all-tables', function () {
             $runner = new class {

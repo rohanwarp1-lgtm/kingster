@@ -10,13 +10,17 @@
 
                     {{-- Shipment header --}}
                     <div class="row g-3 mb-4">
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label">Shipment ID <span class="text-danger">*</span></label>
                             <input type="text" name="shipment_id" class="form-control" placeholder="e.g. FBA-123456" required>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label">Shipment Date <span class="text-danger">*</span></label>
                             <input type="date" name="shipment_date" class="form-control" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Time <span class="text-danger">*</span></label>
+                            <input type="time" name="shipment_time" class="form-control" required>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">State <span class="text-danger">*</span></label>
@@ -28,8 +32,8 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Warehouse <span class="text-danger">*</span></label>
-                            <select name="warehouse_name" class="form-select fba-select2" data-placeholder="Select or type warehouse" data-tags="1" required>
+                            <label class="form-label">Warehouse Name <span class="text-danger">*</span></label>
+                            <select name="warehouse_name" class="form-select fba-select2" data-placeholder="Select or type warehouse name" data-tags="1" required>
                                 <option value=""></option>
                                 @foreach(($warehouses ?? []) as $warehouse)
                                     <option value="{{ $warehouse }}">{{ $warehouse }}</option>

@@ -193,17 +193,18 @@ class WarrantyService
 
     public function getDashboardStats(): array
     {
-        $total = $this->repository->all()->count();
-        $pending = $this->repository->all(['status' => 'pending'])->count();
-        $underReview = $this->repository->all(['status' => 'under_review'])->count();
-        $approved = $this->repository->all(['status' => 'approved'])->count();
+        $counts = \App\Modules\Warranty\Models\WarrantyRegistration::query()
+            ->selectRaw('status, COUNT(*) as cnt')
+            ->groupBy('status')
+            ->pluck('cnt', 'status');
+
         $expiringSoon = $this->repository->getExpiringSoon()->count();
 
         return [
-            'total' => $total,
-            'pending' => $pending,
-            'under_review' => $underReview,
-            'approved' => $approved,
+            'total'        => (int) $counts->sum(),
+            'pending'      => (int) ($counts['pending']      ?? 0),
+            'under_review' => (int) ($counts['under_review'] ?? 0),
+            'approved'     => (int) ($counts['approved']     ?? 0),
             'expiring_soon' => $expiringSoon,
         ];
     }

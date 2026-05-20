@@ -4,6 +4,8 @@ namespace App\Modules\FbaAuto\Repositories;
 
 use App\Modules\FbaAuto\Models\FbaAuto;
 use App\Modules\FbaAuto\Models\FbaState;
+use App\Modules\FbaAuto\Models\FbaWarehouse;
+use App\Models\ProductName;
 use App\Modules\FbaAuto\Interfaces\FbaAutoRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -111,10 +113,45 @@ class FbaAutoRepository implements FbaAutoRepositoryInterface
 
     public function getWarehouses(): array
     {
+        if (Schema::hasTable('fba_warehouses')) {
+            $warehouses = FbaWarehouse::active()->ordered()->pluck('name')->toArray();
+            if (!empty($warehouses)) {
+                return $warehouses;
+            }
+        }
+
         return $this->model->whereNotNull('warehouse_name')
             ->distinct()
+            ->orderBy('warehouse_name')
             ->pluck('warehouse_name')
             ->toArray();
+    }
+
+    public function syncWarehouse(string $name): void
+    {
+        if (trim($name) === '') return;
+        FbaWarehouse::firstOrCreate(
+            ['name' => trim($name)],
+            ['is_active' => true, 'sort_order' => 0]
+        );
+    }
+
+    public function syncState(string $name): void
+    {
+        if (trim($name) === '') return;
+        FbaState::firstOrCreate(
+            ['name' => trim($name)],
+            ['code' => '', 'is_active' => true, 'sort_order' => 0]
+        );
+    }
+
+    public function syncProductName(string $name): void
+    {
+        if (trim($name) === '') return;
+        ProductName::firstOrCreate(
+            ['name' => trim($name)],
+            ['is_deleted' => 0, 'created_by' => auth()->id() ?? 1, 'modified_by' => auth()->id() ?? 1]
+        );
     }
 
     public function getStates(): array

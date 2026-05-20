@@ -89,4 +89,24 @@ class GeneralSettingController extends Controller
         return response()->json(['success' => true, 'message' => 'Settings saved successfully!']);
     }
 
+    public function replacementPolicy()
+    {
+        $setting = GeneralSetting::first() ?? new GeneralSetting();
+        return view('admin.replacement_policy', compact('setting'));
+    }
+
+    public function saveReplacementPolicy(Request $request)
+    {
+        $request->validate([
+            'replacement_policy_content' => 'required|string',
+        ]);
+
+        $setting = GeneralSetting::first() ?? new GeneralSetting();
+        $setting->replacement_policy_content = $request->replacement_policy_content;
+        $setting->modified_by = auth()->id();
+        $setting->save();
+
+        return response()->json(['success' => true, 'message' => 'Replacement policy saved successfully!']);
+    }
+
 }

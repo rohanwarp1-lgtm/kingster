@@ -37,21 +37,13 @@ class FbaAutoController extends Controller
     public function store(StoreFbaAutoRequest $request): JsonResponse
     {
         try {
-            DB::beginTransaction();
-            
             $shipment = $this->service->createShipment($request->validated());
-            
-            DB::commit();
-            
             return response()->json([
                 'success' => true,
                 'message' => 'Shipment created successfully',
                 'data' => $shipment,
             ], 201);
-            
         } catch (Exception $e) {
-            DB::rollBack();
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create shipment: ' . $e->getMessage(),
@@ -76,27 +68,20 @@ class FbaAutoController extends Controller
     public function update(UpdateFbaAutoRequest $request, int $id): JsonResponse
     {
         try {
-            DB::beginTransaction();
-            
             $updated = $this->service->updateShipment($id, $request->validated());
-            
-            DB::commit();
-            
+
             if (!$updated) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Shipment not found',
                 ], 404);
             }
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Shipment updated successfully',
             ]);
-            
         } catch (Exception $e) {
-            DB::rollBack();
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update shipment: ' . $e->getMessage(),
@@ -223,7 +208,8 @@ class FbaAutoController extends Controller
 
     public function ajax(Request $request): JsonResponse
     {
-        return $this->service->getFilteredData($request->all());
+        $data = $this->service->getFilteredData($request->all());
+        return response()->json(['data' => $data]);
     }
 
     public function getStats(): JsonResponse

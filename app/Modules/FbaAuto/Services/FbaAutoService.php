@@ -18,6 +18,7 @@ class FbaAutoService
             $header = [
                 'shipment_id'    => $data['shipment_id'],
                 'shipment_date'  => $data['shipment_date'],
+                'shipment_time'  => $data['shipment_time'],
                 'state'          => $data['state'],
                 'warehouse_name' => $data['warehouse_name'],
                 'generated_by'   => auth()->id(),
@@ -31,6 +32,12 @@ class FbaAutoService
                     'qty'          => $item['qty'],
                     'qty_price'    => $item['qty_price'],
                 ]));
+            }
+
+            $this->repository->syncWarehouse($data['warehouse_name']);
+            $this->repository->syncState($data['state']);
+            foreach ($data['items'] as $item) {
+                $this->repository->syncProductName($item['product_name']);
             }
 
             activity()
@@ -59,6 +66,7 @@ class FbaAutoService
 
             $trackedFields = [
                 'shipment_date',
+                'shipment_time',
                 'product_name',
                 'qty',
                 'state',
@@ -163,22 +171,21 @@ class FbaAutoService
     public function restoreShipment(int $id): bool
     {
         return DB::transaction(function () use ($id) {
-            $shipment = $this->repository->find($id);
-            
-            if (!$shipment) {
-                throw new Exception('Shipment not found');
-            }
-
             $restored = $this->repository->restore($id);
 
-            if ($restored) {
+            if (!$restored) {
+                throw new Exception('Shipment not found or not deleted');
+            }
+
+            $shipment = $this->repository->find($id);
+            if ($shipment) {
                 activity()
                     ->performedOn($shipment)
                     ->causedBy(auth()->user())
                     ->log('FBA Shipment restored');
             }
 
-            return $restored;
+            return true;
         });
     }
 
@@ -201,18 +208,50 @@ class FbaAutoService
         return $results;
     }
 
+    public function bulkDelete(array $ids): array
+    {
+        $results = ['success' => [], 'failed' => []];
+
+        foreach ($ids as $id) {
+            try {
+                $this->deleteShipment($id);
+                $results['success'][] = $id;
+            } catch (Exception $e) {
+                $results['failed'][] = ['id' => $id, 'error' => $e->getMessage()];
+            }
+        }
+
+        return $results;
+    }
+
+    public function bulkRestore(array $ids): array
+    {
+        $results = ['success' => [], 'failed' => []];
+
+        foreach ($ids as $id) {
+            try {
+                $this->restoreShipment($id);
+                $results['success'][] = $id;
+            } catch (Exception $e) {
+                $results['failed'][] = ['id' => $id, 'error' => $e->getMessage()];
+            }
+        }
+
+        return $results;
+    }
+
     public function getDashboardStats(): array
     {
-        $total = $this->repository->all()->count();
-        $pending = $this->repository->all(['status' => 'pending'])->count();
-        $processing = $this->repository->all(['status' => 'processing'])->count();
-        $delivered = $this->repository->all(['status' => 'delivered'])->count();
+        $counts = \App\Modules\FbaAuto\Models\FbaAuto::query()
+            ->selectRaw('status, COUNT(*) as cnt')
+            ->groupBy('status')
+            ->pluck('cnt', 'status');
 
         return [
-            'total' => $total,
-            'pending' => $pending,
-            'processing' => $processing,
-            'delivered' => $delivered,
+            'total'      => (int) $counts->sum(),
+            'pending'    => (int) ($counts['pending']    ?? 0),
+            'processing' => (int) ($counts['processing'] ?? 0),
+            'delivered'  => (int) ($counts['delivered']  ?? 0),
         ];
     }
 
@@ -258,6 +297,7 @@ class FbaAutoService
             $first = $existing->first();
             $header = [
                 'shipment_date'  => $data['shipment_date'],
+                'shipment_time'  => $data['shipment_time'],
                 'state'          => $data['state'],
                 'warehouse_name' => $data['warehouse_name'],
                 'status'         => $data['status'] ?? $first->status,
@@ -294,6 +334,12 @@ class FbaAutoService
                         'generated_by' => $first->generated_by,
                     ]));
                 }
+            }
+
+            $this->repository->syncWarehouse($data['warehouse_name']);
+            $this->repository->syncState($data['state']);
+            foreach ($data['items'] as $item) {
+                $this->repository->syncProductName($item['product_name']);
             }
 
             activity()

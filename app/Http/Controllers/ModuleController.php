@@ -62,17 +62,13 @@ class ModuleController extends Controller
     public function fbaAutoStore(StoreFbaAutoRequest $request)
     {
         try {
-            DB::beginTransaction();
             $shipment = $this->fbaAutoService->createShipment($request->validated());
-            DB::commit();
-            
             return response()->json([
                 'success' => true,
                 'message' => 'Shipment created successfully',
                 'data' => $shipment,
             ]);
         } catch (Exception $e) {
-            DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -108,16 +104,13 @@ class ModuleController extends Controller
     public function fbaAutoUpdate(UpdateFbaAutoRequest $request, $id)
     {
         try {
-            DB::beginTransaction();
             $shipment = $this->fbaAutoRepository->find($id);
             if (!$shipment) {
                 return response()->json(['success' => false, 'message' => 'Shipment not found'], 404);
             }
             $this->fbaAutoService->updateShipmentFull($shipment->shipment_id, $request->validated());
-            DB::commit();
             return response()->json(['success' => true, 'message' => 'Shipment updated successfully']);
         } catch (Exception $e) {
-            DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -153,7 +146,7 @@ class ModuleController extends Controller
             ->addIndexColumn()
             ->addColumn('shipment_id', fn ($row) => '<strong>'.e($row->shipment_id).'</strong>')
             ->addColumn('shipment_date', fn ($row) => optional($row->shipment_date)->format('d-M-Y'))
-            ->addColumn('shipment_time', fn ($row) => $row->shipment_time ? substr($row->shipment_time, 0, 5) : '-')
+            ->addColumn('shipment_time', fn ($row) => $row->shipment_time ? substr((string) $row->shipment_time, 0, 5) : '-')
             ->addColumn('warehouse_name', fn ($row) => '<span class="badge bg-primary">'.e($row->warehouse_name).'</span>')
             ->addColumn('qty_price', fn ($row) => $row->formatted_price)
             ->addColumn('generated_by', fn ($row) => e($row->generator->username ?? $row->generator->name ?? 'System'))
@@ -190,17 +183,13 @@ class ModuleController extends Controller
     public function warrantyStore(StoreWarrantyRequest $request)
     {
         try {
-            DB::beginTransaction();
             $warranty = $this->warrantyService->register($request->validated());
-            DB::commit();
-            
             return response()->json([
                 'success' => true,
                 'message' => 'Warranty registered successfully',
                 'data' => ['ticket_no' => $warranty->ticket_no, 'id' => $warranty->id],
             ], 201);
         } catch (Exception $e) {
-            DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -281,17 +270,13 @@ class ModuleController extends Controller
     public function rmaStore(StoreRmaTicketRequest $request)
     {
         try {
-            DB::beginTransaction();
             $ticket = $this->rmaService->createTicket($request->validated());
-            DB::commit();
-            
             return response()->json([
                 'success' => true,
                 'message' => 'Ticket created successfully',
                 'data' => ['ticket_id' => $ticket->ticket_id, 'id' => $ticket->id],
             ], 201);
         } catch (Exception $e) {
-            DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }

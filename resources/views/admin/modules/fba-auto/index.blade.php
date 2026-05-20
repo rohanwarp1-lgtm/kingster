@@ -98,6 +98,7 @@
                                 <th>#</th>
                                 <th>FBA Shipment ID</th>
                                 <th>FBA Shipment Date</th>
+                                <th>Time</th>
                                 <th>Product</th>
                                 <th>Qty</th>
                                 <th>State</th>
@@ -251,6 +252,7 @@ $(function () {
             {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
             {data: 'shipment_id', name: 'shipment_id'},
             {data: 'shipment_date', name: 'shipment_date'},
+            {data: 'shipment_time', name: 'shipment_time'},
             {data: 'product_name', name: 'product_name'},
             {data: 'qty', name: 'qty'},
             {data: 'state', name: 'state'},
@@ -352,6 +354,22 @@ $(document).on('click', '.remove-row-btn', function() {
 
 $('#create-form').on('submit', function(e) {
     e.preventDefault();
+
+    // Force select2 to commit all selected values to the underlying <select> before FormData reads them
+    $(this).find('select').trigger('change');
+
+    // Validate at least one product row has a product selected
+    var valid = true;
+    $('#product-rows tr').each(function() {
+        var product = $(this).find('select[name*="product_name"]').val();
+        if (!product || product.trim() === '') {
+            toastr.error('Please select or enter a product name for all rows');
+            valid = false;
+            return false;
+        }
+    });
+    if (!valid) return;
+
     let formData = new FormData(this);
 
     $.ajax({
@@ -437,6 +455,8 @@ $(document).on('click', '.remove-edit-row-btn', function() {
 
 $(document).on('submit', '#edit-form', function(e) {
     e.preventDefault();
+    // Force select2 to commit all values before FormData reads them
+    $(this).find('select').trigger('change');
     let id = $('#edit_id').val();
     let formData = new FormData(this);
 

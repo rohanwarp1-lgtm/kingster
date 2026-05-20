@@ -97,6 +97,8 @@
     }
     .sidebar-menu li a i { margin-right: 12px; font-size: 16px; width: 18px; text-align: center; }
     .sidebar-menu li a:hover { background: rgba(255,255,255,.08); color: #fff; }
+    .sidebar-menu li a:hover i,
+    .sidebar-menu li.active > a i { color: #fff !important; }
     .sidebar-menu li.active > a {
         background: var(--gradient) !important; color: #fff !important;
         box-shadow: 0 4px 15px rgba(102,126,234,.35);
@@ -129,7 +131,7 @@
     .admin-sidebar-toggle:focus,
     #toggle_btn.admin-sidebar-toggle:hover,
     #toggle_btn.admin-sidebar-toggle:focus {
-        background: #f8f9fa; color: var(--primary); border-color: var(--border);
+        background: #f8f9fa; color: var(--primary); border-color: transparent !important;
         outline: none; box-shadow: none;
     }
     .admin-sidebar-toggle i,
@@ -146,7 +148,7 @@
         padding: 7px 14px; border-radius: var(--radius-sm);
         border: 1px solid var(--border); transition: all .2s ease;
     }
-    .viewsite:hover { background: #f8f9fa; color: var(--primary); border-color: var(--primary); }
+    .viewsite:hover { background: #f8f9fa; color: var(--primary); border-color: transparent !important; box-shadow: none !important; }
     .viewsite i { font-size: 14px; }
 
     .user-img { display: flex; align-items: center; gap: 10px; }
@@ -278,7 +280,17 @@
         display: inline-flex; align-items: center; gap: 6px;
         transition: background .25s ease, box-shadow .25s ease, border-color .25s ease, color .25s ease, opacity .25s ease;
     }
-    .btn:hover { box-shadow: 0 4px 14px rgba(0,0,0,.12); }
+    .btn:hover,
+    .btn:focus,
+    .btn:active {
+        border-color: transparent !important;
+        box-shadow: none !important;
+    }
+    .btn i,
+    .btn [class^="fe-"],
+    .btn [class*=" fe-"] {
+        color: currentColor !important;
+    }
     .btn-primary { background: var(--gradient); color: #fff; border: none; }
     .btn-primary:hover { background: var(--gradient-rev); color: #fff; }
     .btn-success { background: linear-gradient(135deg, #28c76f, #48da89); color: #fff; }
@@ -525,6 +537,14 @@
     .fe-trash:hover, .fe-trash { color: var(--danger) !important; }
     .fe-rotate-ccw:hover, .fe-rotate-ccw { color: var(--success) !important; }
     .fe-sliders { color: var(--warning) !important; }
+    .btn .fe-trash,
+    .btn .fe-trash-2,
+    .btn .fe-rotate-ccw,
+    .btn .fe-sliders,
+    .bg-comman i,
+    .stat-card i {
+        color: #fff !important;
+    }
 
     /* ---- Responsive ---- */
     @media (max-width: 768px) {

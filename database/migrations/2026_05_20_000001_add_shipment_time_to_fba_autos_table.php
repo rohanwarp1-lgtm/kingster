@@ -8,18 +8,18 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::hasColumn('fba_autos', 'shipment_time')) {
+        if (! Schema::hasColumn('fba_autos', 'shipment_time')) {
             Schema::table('fba_autos', function (Blueprint $table) {
-                $table->dropColumn('shipment_time');
+                $table->time('shipment_time')->nullable()->after('shipment_date');
             });
         }
     }
 
     public function down(): void
     {
-        if (! Schema::hasColumn('fba_autos', 'shipment_time')) {
+        if (Schema::hasColumn('fba_autos', 'shipment_time')) {
             Schema::table('fba_autos', function (Blueprint $table) {
-                $table->time('shipment_time')->after('shipment_date');
+                $table->dropColumn('shipment_time');
             });
         }
     }

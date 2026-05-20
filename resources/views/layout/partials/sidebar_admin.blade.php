@@ -56,6 +56,11 @@
                         <i class="fe fe-settings"></i> <span>General Settings</span>
                     </a>
                 </li>
+                <li class="{{ Route::is('admin.replacement.policy') ? 'active' : '' }}">
+                    <a href="{{ route('admin.replacement.policy') }}">
+                        <i class="fe fe-file-text"></i> <span>Replacement Policy</span>
+                    </a>
+                </li>
                 <li class="{{ Route::is('admin.activity.log') ? 'active' : '' }}">
                     <a href="{{ route('admin.activity.log') }}">
                         <i class="fe fe-activity"></i> <span>Activity Log</span>

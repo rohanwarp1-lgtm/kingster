@@ -42,6 +42,9 @@ class FbaAutoDataTable extends DataTable
             ->addColumn('shipment_date', function ($row) {
                 return $row->shipment_date->format('d M Y');
             })
+            ->addColumn('shipment_time', function ($row) {
+                return $row->shipment_time ? substr((string) $row->shipment_time, 0, 5) : '-';
+            })
             ->addColumn('generated_by', function ($row) {
                 return $row->generator->name ?? 'N/A';
             })
@@ -106,12 +109,13 @@ class FbaAutoDataTable extends DataTable
             Column::make('DT_RowIndex')->title('#')->orderable(false)->searchable(false)->width('5%'),
             Column::make('shipment_id')->title('Shipment ID')->width('12%'),
             Column::make('product_name')->title('Product Name')->width('15%'),
-            Column::make('warehouse')->title('Warehouse')->width('10%'),
+            Column::make('warehouse')->title('Warehouse Name')->width('10%'),
             Column::make('state')->title('State')->width('10%'),
             Column::make('qty')->title('Qty')->width('7%'),
             Column::make('qty_price')->title('Price')->width('10%'),
             Column::make('status')->title('Status')->width('10%'),
             Column::make('shipment_date')->title('Date')->width('10%'),
+            Column::make('shipment_time')->title('Time')->width('8%'),
             Column::make('generated_by')->title('Created By')->width('10%'),
             Column::make('actions')->title('Actions')->orderable(false)->searchable(false)->width('13%'),
         ];
