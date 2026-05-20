@@ -2,14 +2,16 @@
 
 namespace App\Http\Middleware;
 
+use App\Traits\MigrationTrait;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class AutoMigrate
 {
+    use MigrationTrait;
+
     // Session key — cleared whenever a deploy resets session storage
     private const SESSION_KEY = 'schema_verified';
 
@@ -77,61 +79,6 @@ class AutoMigrate
      */
     private function addMissingColumns(): void
     {
-        $schema = [
-            'users' => [
-                'session_id'  => ['type' => 'string',  'nullable' => true,  'default' => null],
-                'role'        => ['type' => 'string',  'nullable' => false, 'default' => 'Sub Admin'],
-                'is_deleted'  => ['type' => 'integer', 'nullable' => false, 'default' => 0],
-            ],
-            'warranty_records' => [
-                'is_deleted'  => ['type' => 'integer', 'nullable' => false, 'default' => 0],
-                'created_by'  => ['type' => 'integer', 'nullable' => true,  'default' => null],
-                'modified_by' => ['type' => 'integer', 'nullable' => true,  'default' => null],
-            ],
-            'products' => [
-                'status'      => ['type' => 'integer', 'nullable' => false, 'default' => 1],
-                'is_deleted'  => ['type' => 'integer', 'nullable' => false, 'default' => 0],
-                'is_variant'  => ['type' => 'integer', 'nullable' => false, 'default' => 0],
-                'index'       => ['type' => 'integer', 'nullable' => false, 'default' => 1000],
-            ],
-            'product_names' => [
-                'is_deleted'  => ['type' => 'integer', 'nullable' => false, 'default' => 0],
-                'created_by'  => ['type' => 'integer', 'nullable' => true,  'default' => null],
-                'modified_by' => ['type' => 'integer', 'nullable' => true,  'default' => null],
-            ],
-            'general_settings' => [
-                'modified_by' => ['type' => 'integer', 'nullable' => true,  'default' => null],
-            ],
-        ];
-
-        foreach ($schema as $table => $columns) {
-            if (!Schema::hasTable($table)) {
-                continue;
-            }
-
-            foreach ($columns as $column => $definition) {
-                if (!Schema::hasColumn($table, $column)) {
-                    Schema::table($table, function ($t) use ($column, $definition) {
-                        $col = match ($definition['type']) {
-                            'integer' => $t->integer($column),
-                            'string'  => $t->string($column),
-                            'text'    => $t->text($column),
-                            'boolean' => $t->boolean($column),
-                            default   => $t->string($column),
-                        };
-
-                        if ($definition['nullable']) {
-                            $col->nullable();
-                        }
-
-                        if ($definition['default'] !== null) {
-                            $col->default($definition['default']);
-                        } elseif ($definition['nullable']) {
-                            $col->nullable()->default(null);
-                        }
-                    });
-                }
-            }
-        }
+        $this->repairKnownSchema();
     }
 }
