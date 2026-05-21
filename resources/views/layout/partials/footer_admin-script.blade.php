@@ -9,8 +9,8 @@
 <script src="{{ asset('admin_assets/js/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('admin_assets/js/dataTables.bootstrap4.min.js') }}"></script>
 <script src="{{ asset('admin_assets/js/select2.min.js') }}"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.7.12/sweetalert2.all.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script src="{{ asset('admin_assets/plugins/sweetalert2/sweetalert2.all.min.js') }}"></script>
+<script src="{{ asset('admin_assets/plugins/toastr/toastr.min.js') }}"></script>
 <script src="{{ asset('admin_assets/js/admin.js') }}"></script>
 
 <script>
