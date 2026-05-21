@@ -8,16 +8,10 @@
             <form id="create-form">
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <div class="form-group">
                                 <label for="shipment_date">Shipment Date <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control" id="shipment_date" name="shipment_date" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="shipment_time">Shipment Time <span class="text-danger">*</span></label>
-                                <input type="time" class="form-control" id="shipment_time" name="shipment_time" required>
                             </div>
                         </div>
                     </div>

@@ -4,19 +4,14 @@
 
         {{-- Shipment header --}}
         <div class="row g-3 mb-3">
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <label class="form-label">Shipment ID</label>
                 <input type="text" class="form-control" value="{{ $shipment->shipment_id }}" disabled>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <label class="form-label">Shipment Date <span class="text-danger">*</span></label>
                 <input type="date" name="shipment_date" class="form-control"
                        value="{{ $shipment->shipment_date ? $shipment->shipment_date->format('Y-m-d') : '' }}" required>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">Time <span class="text-danger">*</span></label>
-                <input type="time" name="shipment_time" class="form-control"
-                       value="{{ $shipment->shipment_time ? substr((string) $shipment->shipment_time, 0, 5) : '' }}" required>
             </div>
             <div class="col-md-3">
                 <label class="form-label">State <span class="text-danger">*</span></label>

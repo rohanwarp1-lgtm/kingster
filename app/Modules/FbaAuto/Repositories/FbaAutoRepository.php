@@ -129,27 +129,43 @@ class FbaAutoRepository implements FbaAutoRepositoryInterface
 
     public function syncWarehouse(string $name): void
     {
-        if (trim($name) === '') return;
+        $name = $this->cleanSelectValue($name);
+        if ($name === '' || ! Schema::hasTable('fba_warehouses')) return;
+
         FbaWarehouse::firstOrCreate(
-            ['name' => trim($name)],
+            ['name' => $name],
             ['is_active' => true, 'sort_order' => 0]
         );
     }
 
     public function syncState(string $name): void
     {
-        if (trim($name) === '') return;
-        FbaState::firstOrCreate(
-            ['name' => trim($name)],
-            ['code' => '', 'is_active' => true, 'sort_order' => 0]
-        );
+        $name = $this->cleanSelectValue($name);
+        if ($name === '' || ! Schema::hasTable('fba_states')) return;
+
+        $state = FbaState::firstOrNew(['name' => $name]);
+
+        if (! $state->exists) {
+            $state->code = $this->uniqueStateCode($name);
+            $state->is_active = true;
+            $state->sort_order = 0;
+            $state->save();
+            return;
+        }
+
+        if ($state->code === null || trim((string) $state->code) === '') {
+            $state->code = $this->uniqueStateCode($name, $state->id);
+            $state->save();
+        }
     }
 
     public function syncProductName(string $name): void
     {
-        if (trim($name) === '') return;
+        $name = $this->cleanSelectValue($name);
+        if ($name === '') return;
+
         ProductName::firstOrCreate(
-            ['name' => trim($name)],
+            ['name' => $name],
             ['is_deleted' => 0, 'created_by' => auth()->id() ?? 1, 'modified_by' => auth()->id() ?? 1]
         );
     }
@@ -173,5 +189,33 @@ class FbaAutoRepository implements FbaAutoRepositoryInterface
             ->orderBy('state')
             ->pluck('state')
             ->toArray();
+    }
+
+    private function cleanSelectValue(string $value): string
+    {
+        return trim(preg_replace('/\s+/', ' ', $value));
+    }
+
+    private function uniqueStateCode(string $name, ?int $ignoreId = null): string
+    {
+        $base = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $name));
+        $base = $base !== '' ? substr($base, 0, 10) : 'STATE';
+        $code = $base;
+        $suffix = 1;
+
+        while ($this->stateCodeExists($code, $ignoreId)) {
+            $suffixText = (string) $suffix++;
+            $code = substr($base, 0, max(1, 10 - strlen($suffixText))) . $suffixText;
+        }
+
+        return $code;
+    }
+
+    private function stateCodeExists(string $code, ?int $ignoreId = null): bool
+    {
+        return FbaState::query()
+            ->where('code', $code)
+            ->when($ignoreId, fn($query) => $query->where('id', '!=', $ignoreId))
+            ->exists();
     }
 }

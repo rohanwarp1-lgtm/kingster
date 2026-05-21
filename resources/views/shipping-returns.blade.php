@@ -26,6 +26,9 @@
             
                 <div class="col-md-12">
                     <div class="terms-content privacy-cont">
+                        @if(!empty($generalSettings?->shipping_returns_content))
+                            {!! $generalSettings->shipping_returns_content !!}
+                        @else
                         <h4 class="mb-4">Shipping, Returns & Refunds</h4>
 
                         <h6>Is Free shipping available?</h6>
@@ -63,6 +66,7 @@
                         <h5>REFUNDS</h5>
                         <p>We do not offer returns on sold products. We strive for an outstanding shopping experience with full disclosure and transparency. Refunds are considered on a case-by-case basis. If approved, the refund will be processed within 10 business days to your original payment method. For delays beyond 15 business days, please contact us at {{ isset($generalSettings) && $generalSettings->customer_support_email ? $generalSettings->customer_support_email : 'support@kingster.info' }}.</p>
                         <hr>
+                        @endif
 
                     </div>
                 </div>

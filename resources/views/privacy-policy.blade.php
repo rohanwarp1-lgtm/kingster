@@ -26,6 +26,9 @@
 
                 <div class="col-md-12">
                     <div class="terms-content privacy-cont">
+                        @if(!empty($generalSettings?->privacy_policy_content))
+                            {!! $generalSettings->privacy_policy_content !!}
+                        @else
                         <p>Kingster operates the kingster.in website.</p>
                         <p>This page is used to inform website visitors regarding our policies with the collection, use, and disclosure of Personal Information for anyone who chooses to use our Service via the kingster.in website.</p>
                         <p>By using our Service, you agree to the collection and use of information in accordance with this policy. The Personal Information that we collect is used for providing and improving the Service. We do not use or share your information with anyone except as described in this Privacy Policy.</p>
@@ -56,6 +59,7 @@
                         <h6 class="mb-2">Contact Us</h6>
                         <p>If you have any questions or suggestions about our Privacy Policy, feel free to contact us at:</p>
                         <p><a href="#">Email :- {{ isset($generalSettings) && $generalSettings->customer_support_email ? $generalSettings->customer_support_email : 'support@kingster.info' }} || Call On :- {{ isset($generalSettings) && $generalSettings->customer_support_mobile ? $generalSettings->customer_support_mobile : '+91 88665 13744' }}</a></p>
+                        @endif
                     </div>
                 </div>
 

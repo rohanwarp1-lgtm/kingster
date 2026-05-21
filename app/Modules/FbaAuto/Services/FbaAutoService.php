@@ -18,7 +18,6 @@ class FbaAutoService
             $header = [
                 'shipment_id'    => $data['shipment_id'],
                 'shipment_date'  => $data['shipment_date'],
-                'shipment_time'  => $data['shipment_time'],
                 'state'          => $data['state'],
                 'warehouse_name' => $data['warehouse_name'],
                 'generated_by'   => auth()->id(),
@@ -66,7 +65,6 @@ class FbaAutoService
 
             $trackedFields = [
                 'shipment_date',
-                'shipment_time',
                 'product_name',
                 'qty',
                 'state',
@@ -123,10 +121,15 @@ class FbaAutoService
                 throw new Exception("Invalid status transition from '{$oldStatus}' to '{$newStatus}'");
             }
 
-            $updated = $this->repository->update($id, [
-                'status' => $newStatus,
-                'updated_by' => auth()->id(),
-            ]);
+            $items = $this->repository->getByShipmentId($shipment->shipment_id);
+            $updated = false;
+
+            foreach ($items as $item) {
+                $updated = $this->repository->update($item->id, [
+                    'status' => $newStatus,
+                    'updated_by' => auth()->id(),
+                ]) || $updated;
+            }
 
             if ($updated) {
                 $shipment->refresh();
@@ -138,6 +141,8 @@ class FbaAutoService
                         'old_status' => $oldStatus,
                         'new_status' => $newStatus,
                         'notes' => $notes,
+                        'shipment_id' => $shipment->shipment_id,
+                        'item_count' => $items->count(),
                     ])
                     ->log("FBA Status changed from {$oldStatus} to {$newStatus}");
             }
@@ -155,12 +160,21 @@ class FbaAutoService
                 throw new Exception('Shipment not found');
             }
 
-            $deleted = $this->repository->delete($id);
+            $items = $this->repository->getByShipmentId($shipment->shipment_id);
+            $deleted = false;
+
+            foreach ($items as $item) {
+                $deleted = $this->repository->delete($item->id) || $deleted;
+            }
 
             if ($deleted) {
                 activity()
                     ->performedOn($shipment)
                     ->causedBy(auth()->user())
+                    ->withProperties([
+                        'shipment_id' => $shipment->shipment_id,
+                        'item_count' => $items->count(),
+                    ])
                     ->log('FBA Shipment deleted');
             }
 
@@ -243,9 +257,11 @@ class FbaAutoService
     public function getDashboardStats(): array
     {
         $counts = \App\Modules\FbaAuto\Models\FbaAuto::query()
-            ->selectRaw('status, COUNT(*) as cnt')
-            ->groupBy('status')
-            ->pluck('cnt', 'status');
+            ->select('shipment_id', 'status')
+            ->orderBy('id')
+            ->get()
+            ->unique('shipment_id')
+            ->countBy('status');
 
         return [
             'total'      => (int) $counts->sum(),
@@ -297,7 +313,6 @@ class FbaAutoService
             $first = $existing->first();
             $header = [
                 'shipment_date'  => $data['shipment_date'],
-                'shipment_time'  => $data['shipment_time'],
                 'state'          => $data['state'],
                 'warehouse_name' => $data['warehouse_name'],
                 'status'         => $data['status'] ?? $first->status,

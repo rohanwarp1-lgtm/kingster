@@ -3,6 +3,16 @@
 @section('title', 'FBA Shipment')
 @section('content')
 
+<style>
+    #fba-auto-table td { vertical-align: top; }
+    .fba-merged-line { min-height: 24px; padding: 2px 0; }
+    .fba-merged-line + .fba-merged-line {
+        border-top: 1px solid #edf0f4;
+        margin-top: 4px;
+        padding-top: 6px;
+    }
+</style>
+
 <div class="page-wrapper">
     <div class="content container-fluid">
         
@@ -98,7 +108,6 @@
                                 <th>#</th>
                                 <th>FBA Shipment ID</th>
                                 <th>FBA Shipment Date</th>
-                                <th>Time</th>
                                 <th>Product</th>
                                 <th>Qty</th>
                                 <th>State</th>
@@ -252,7 +261,6 @@ $(function () {
             {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
             {data: 'shipment_id', name: 'shipment_id'},
             {data: 'shipment_date', name: 'shipment_date'},
-            {data: 'shipment_time', name: 'shipment_time'},
             {data: 'product_name', name: 'product_name'},
             {data: 'qty', name: 'qty'},
             {data: 'state', name: 'state'},
@@ -283,7 +291,18 @@ function initFbaSelect2($scope) {
             tags: $select.data('tags') === true || $select.data('tags') === 1,
             placeholder: $select.data('placeholder') || 'Select option',
             allowClear: true,
-            dropdownParent: $modal.length ? $modal : $(document.body)
+            dropdownParent: $modal.length ? $modal : $(document.body),
+            createTag: function(params) {
+                var term = $.trim(params.term || '').replace(/\s+/g, ' ');
+                if (!term) return null;
+                return { id: term, text: term, isNew: true };
+            },
+            templateResult: function(data) {
+                if (data.isNew) {
+                    return $('<span><i class="fe fe-plus-circle me-1 text-primary"></i>Add: <strong>' + data.text + '</strong></span>');
+                }
+                return data.text;
+            }
         });
     });
 }

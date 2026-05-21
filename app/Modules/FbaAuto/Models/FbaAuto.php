@@ -15,7 +15,6 @@ class FbaAuto extends Model
     protected $fillable = [
         'shipment_id',
         'shipment_date',
-        'shipment_time',
         'product_name',
         'qty',
         'state',

@@ -58,7 +58,7 @@
                 </li>
                 <li class="{{ Route::is('admin.replacement.policy') ? 'active' : '' }}">
                     <a href="{{ route('admin.replacement.policy') }}">
-                        <i class="fe fe-file-text"></i> <span>Replacement Policy</span>
+                        <i class="fe fe-file-text"></i> <span>Page Content</span>
                     </a>
                 </li>
                 <li class="{{ Route::is('admin.activity.log') ? 'active' : '' }}">

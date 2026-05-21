@@ -10,17 +10,13 @@
 
                     {{-- Shipment header --}}
                     <div class="row g-3 mb-4">
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <label class="form-label">Shipment ID <span class="text-danger">*</span></label>
                             <input type="text" name="shipment_id" class="form-control" placeholder="e.g. FBA-123456" required>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <label class="form-label">Shipment Date <span class="text-danger">*</span></label>
                             <input type="date" name="shipment_date" class="form-control" required>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Time <span class="text-danger">*</span></label>
-                            <input type="time" name="shipment_time" class="form-control" required>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">State <span class="text-danger">*</span></label>

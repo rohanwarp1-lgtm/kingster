@@ -23,7 +23,9 @@
 						<!-- Terms & Conditions -->
 						<div class="col-md-12">
 							<div class="terms-content privacy-cont">
-								
+								@if(!empty($generalSettings?->terms_condition_content))
+									{!! $generalSettings->terms_condition_content !!}
+								@else
 								<h6>1. General</h6>
 								<p>Kingster is a tech brand offering a range of computer accessories and storage devices. By purchasing our products or using our services, you agree to comply with and be bound by the following terms and conditions.</p>
 								<hr>
@@ -54,6 +56,7 @@
 								<h6>10. Changes to Terms</h6>
 								<p>We may revise these Terms from time to time. Continued use of our services after any such changes shall constitute your consent to the revised terms.</p>
 								<hr>
+								@endif
 							</div>
 						</div>
 						<!-- /Terms & Conditions -->

@@ -137,30 +137,76 @@ class ModuleController extends Controller
 
     public function fbaAutoAjax(Request $request)
     {
-        $query = FbaAuto::query()
+        $shipments = FbaAuto::query()
             ->with(['generator', 'updater'])
-            ->select('fba_autos.*');
+            ->orderByDesc('created_at')
+            ->get()
+            ->groupBy('shipment_id')
+            ->map(function ($items) {
+                $first = $items->first();
+                $latestUpdate = $items->sortByDesc('updated_at')->first();
+
+                return (object) [
+                    'id' => $first->id,
+                    'shipment_id' => $first->shipment_id,
+                    'shipment_date' => $first->shipment_date,
+                    'product_names' => $items->pluck('product_name')->values()->all(),
+                    'qty_values' => $items->pluck('qty')->values()->all(),
+                    'qty_price_values' => $items->pluck('qty_price')->values()->all(),
+                    'state' => $first->state,
+                    'warehouse_name' => $first->warehouse_name,
+                    'generated_by_name' => $first->generator->username ?? $first->generator->name ?? 'System',
+                    'generated_at' => $items->sortBy('created_at')->first()?->created_at,
+                    'updated_by_name' => $latestUpdate?->updater ? ($latestUpdate->updater->username ?? $latestUpdate->updater->name ?? 'System') : null,
+                    'updated_at' => $latestUpdate?->updated_by ? $latestUpdate->updated_at : null,
+                    'status' => $first->status,
+                ];
+            })
+            ->values();
 
         return datatables()
-            ->eloquent($query)
+            ->collection($shipments)
             ->addIndexColumn()
             ->addColumn('shipment_id', fn ($row) => '<strong>'.e($row->shipment_id).'</strong>')
             ->addColumn('shipment_date', fn ($row) => optional($row->shipment_date)->format('d-M-Y'))
-            ->addColumn('shipment_time', fn ($row) => $row->shipment_time ? substr((string) $row->shipment_time, 0, 5) : '-')
+            ->addColumn('product_name', fn ($row) => $this->formatFbaLines($row->product_names))
+            ->addColumn('qty', fn ($row) => $this->formatFbaLines(array_map(fn ($qty) => number_format((int) $qty), $row->qty_values)))
             ->addColumn('warehouse_name', fn ($row) => '<span class="badge bg-primary">'.e($row->warehouse_name).'</span>')
-            ->addColumn('qty_price', fn ($row) => $row->formatted_price)
-            ->addColumn('generated_by', fn ($row) => e($row->generator->username ?? $row->generator->name ?? 'System'))
-            ->addColumn('generated_at', fn ($row) => optional($row->created_at)->format('d-M-Y H:i'))
-            ->addColumn('updated_by', fn ($row) => $row->updater ? e($row->updater->username ?? $row->updater->name ?? 'System') : '-')
-            ->addColumn('updated_at', fn ($row) => $row->updater ? optional($row->updated_at)->format('d-M-Y H:i') : '-')
-            ->addColumn('status', fn ($row) => $row->status_badge)
+            ->addColumn('qty_price', fn ($row) => $this->formatFbaLines(array_map(fn ($price) => '₹' . number_format((float) $price, 2), $row->qty_price_values)))
+            ->addColumn('generated_by', fn ($row) => e($row->generated_by_name))
+            ->addColumn('generated_at', fn ($row) => optional($row->generated_at)->format('d-M-Y H:i'))
+            ->addColumn('updated_by', fn ($row) => $row->updated_by_name ? e($row->updated_by_name) : '-')
+            ->addColumn('updated_at', fn ($row) => $row->updated_at ? optional($row->updated_at)->format('d-M-Y H:i') : '-')
+            ->addColumn('status', fn ($row) => $this->fbaStatusBadge($row->status))
             ->addColumn('action', fn ($row) =>
                 '<a href="'.route('admin.fba-auto.show', $row->id).'" class="btn btn-sm btn-info me-1 text-white" title="View history"><i class="fe fe-eye"></i></a>'.
                 '<button class="btn btn-sm btn-primary edit-btn me-1" data-id="'.$row->id.'" title="Edit"><i class="fe fe-edit"></i></button>'.
                 '<button class="btn btn-sm btn-danger delete-btn" data-id="'.$row->id.'"><i class="fe fe-trash-2"></i></button>'
             )
-            ->rawColumns(['shipment_id', 'warehouse_name', 'status', 'action'])
+            ->rawColumns(['shipment_id', 'product_name', 'qty', 'warehouse_name', 'qty_price', 'status', 'action'])
             ->make(true);
+    }
+
+    private function formatFbaLines(array $values): string
+    {
+        return collect($values)
+            ->map(fn ($value) => '<div class="fba-merged-line">'.e((string) $value).'</div>')
+            ->implode('');
+    }
+
+    private function fbaStatusBadge(string $status): string
+    {
+        $badges = [
+            'pending' => '<span class="badge bg-warning">Pending</span>',
+            'processing' => '<span class="badge bg-info">Processing</span>',
+            'shipped' => '<span class="badge bg-primary">Shipped</span>',
+            'delivered' => '<span class="badge bg-success">Delivered</span>',
+            'closed' => '<span class="badge bg-secondary">Closed</span>',
+            'cancelled' => '<span class="badge bg-danger">Cancelled</span>',
+            'returned' => '<span class="badge bg-dark">Returned</span>',
+        ];
+
+        return $badges[$status] ?? '<span class="badge bg-secondary">Unknown</span>';
     }
 
     public function fbaAutoStats()

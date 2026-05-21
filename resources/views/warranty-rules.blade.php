@@ -66,13 +66,13 @@
 
 
 
-@php $policySetting = \App\Models\GeneralSetting::first(); @endphp
+@php $policySetting = $generalSettings ?? \App\Models\GeneralSetting::first(); @endphp
 
 <div class="page-wrapper">
     <div class="content">
         <div class="container policyPage">
 
-            @if(!empty($policySetting->replacement_policy_content))
+            @if(!empty($policySetting?->replacement_policy_content))
                 {!! $policySetting->replacement_policy_content !!}
             @else
                 <h3 class="text-center">Kingster Replacement Policy</h3>
@@ -164,4 +164,3 @@
 
 
 @endsection
-

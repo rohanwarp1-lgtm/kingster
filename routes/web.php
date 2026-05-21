@@ -63,7 +63,10 @@ Route::get('privacy-policy', function () {
     $generalSettings = \App\Models\GeneralSetting::first();
     return view('privacy-policy', compact('generalSettings')); 
 })->name('privacy-policy');
-Route::get('terms-condition', function () { return view('terms-condition'); });
+Route::get('terms-condition', function () {
+    $generalSettings = \App\Models\GeneralSetting::first();
+    return view('terms-condition', compact('generalSettings'));
+})->name('terms-condition');
 Route::get('contact-us', function () { 
     $generalSettings = \App\Models\GeneralSetting::first();
     return view('contact-us', compact('generalSettings')); 
@@ -73,7 +76,10 @@ Route::get('contact-us', function () {
 // Warranty
 Route::get('warranty-application-form', function () { return view('warranty-apply'); })->name('warranty.apply.view');
 Route::get('warranty-status-lookup', function () { return view('warranty-check'); })->name('warranty.check.view');
-Route::get('replacement-policy', function () { return view('warranty-rules'); })->name('warranty.replacement.policy');
+Route::get('replacement-policy', function () {
+    $generalSettings = \App\Models\GeneralSetting::first();
+    return view('warranty-rules', compact('generalSettings'));
+})->name('warranty.replacement.policy');
 Route::get('store-warranty', [WarrantyController::class, 'save'])->name('store.warranty.details');
 
 

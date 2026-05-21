@@ -89,9 +89,9 @@ trait MigrationTrait
             'general_settings' => [
                 'modified_by'                => ['type' => 'integer', 'nullable' => true, 'default' => null],
                 'replacement_policy_content' => ['type' => 'longText', 'nullable' => true, 'default' => null],
-            ],
-            'fba_autos' => [
-                'shipment_time' => ['type' => 'time', 'nullable' => true, 'default' => null, 'after' => 'shipment_date'],
+                'privacy_policy_content'     => ['type' => 'longText', 'nullable' => true, 'default' => null],
+                'terms_condition_content'    => ['type' => 'longText', 'nullable' => true, 'default' => null],
+                'shipping_returns_content'   => ['type' => 'longText', 'nullable' => true, 'default' => null],
             ],
         ];
 
@@ -144,7 +144,7 @@ trait MigrationTrait
     {
         $lines = [];
 
-        if (Schema::hasTable('fba_states')) {
+        if (Schema::hasTable('fba_states') && Schema::hasColumn('fba_states', 'code')) {
             $states = [
                 ['name' => 'Gujarat', 'code' => 'GJ', 'sort_order' => 1],
                 ['name' => 'Maharashtra', 'code' => 'MH', 'sort_order' => 2],
@@ -167,6 +167,23 @@ trait MigrationTrait
                     ]);
                     $lines[] = "Seeded FBA state {$state['name']}.";
                 }
+            }
+
+            $customStates = DB::table('fba_states')
+                ->whereNull('code')
+                ->orWhere('code', '')
+                ->orderBy('id')
+                ->get(['id', 'name']);
+
+            foreach ($customStates as $state) {
+                DB::table('fba_states')
+                    ->where('id', $state->id)
+                    ->update([
+                        'code' => $this->uniqueFbaStateCode((string) $state->name, (int) $state->id),
+                        'updated_at' => now(),
+                    ]);
+
+                $lines[] = "Repaired FBA state code for {$state->name}.";
             }
         }
 
@@ -194,6 +211,29 @@ trait MigrationTrait
         }
 
         return $lines;
+    }
+
+    private function uniqueFbaStateCode(string $name, int $ignoreId): string
+    {
+        $base = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $name));
+        $base = $base !== '' ? substr($base, 0, 10) : 'STATE';
+        $code = $base;
+        $suffix = 1;
+
+        while ($this->fbaStateCodeExists($code, $ignoreId)) {
+            $suffixText = (string) $suffix++;
+            $code = substr($base, 0, max(1, 10 - strlen($suffixText))) . $suffixText;
+        }
+
+        return $code;
+    }
+
+    private function fbaStateCodeExists(string $code, int $ignoreId): bool
+    {
+        return DB::table('fba_states')
+            ->where('code', $code)
+            ->where('id', '!=', $ignoreId)
+            ->exists();
     }
 
     private function getPendingMigrationNames(): array
