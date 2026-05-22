@@ -23,8 +23,8 @@ return new class extends Migration
             $table->date('purchase_date');
             $table->date('expiry_date');
             $table->enum('warranty_status', ['Pending', 'Active', 'Expired', 'Rejected'])->default('Pending');
-            $table->integer('created_by')->default(1);
-            $table->integer('modified_by')->default(1);
+            $table->integer('created_by')->nullable()->default(null);
+            $table->integer('modified_by')->nullable()->default(null);
             $table->integer('is_deleted')->default(0);
             $table->timestamps();
         });

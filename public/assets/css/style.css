@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /****** Utils ******/
-@import url("/assets/css/inter-local.css");
+@import url("inter-local.css");
 /******* Base *******/
 body {
   font-family: "Inter", sans-serif;
@@ -10242,12 +10242,10 @@ html.menu-opened body {
     z-index: 99;
   }
   .navbar-brand.logo {
-    display: none;
+    display: block;
   }
   .navbar-brand.logo-small {
-    display: block;
-    text-align: center;
-    margin-right: 0;
+    display: none;
   }
   .header-navbar-rht {
     position: absolute;

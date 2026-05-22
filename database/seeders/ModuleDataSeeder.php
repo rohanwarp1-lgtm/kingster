@@ -15,10 +15,12 @@ class ModuleDataSeeder extends Seeder
 {
     public function run(): void
     {
+        $userId = \App\Models\User::first()?->id ?? 1;
+
         // Seed product names
         $productNames = ['Samsung 870 EVO SSD 500GB', 'WD Blue HDD 1TB', 'Kingston RAM 8GB DDR4', 'Logitech MX Keys', 'Anker USB Hub'];
         foreach ($productNames as $name) {
-            ProductName::firstOrCreate(['name' => $name], ['is_deleted' => 0, 'created_by' => 1, 'modified_by' => 1]);
+            ProductName::firstOrCreate(['name' => $name], ['is_deleted' => 0, 'created_by' => $userId, 'modified_by' => $userId]);
         }
 
         // Seed warehouses
@@ -125,8 +127,8 @@ class ModuleDataSeeder extends Seeder
                 'shipment_date'  => $group['shipment_date'],
                 'state'          => $group['state'],
                 'warehouse_name' => $group['warehouse_name'],
-                'generated_by'   => 1,
-                'updated_by'     => 1,
+                'generated_by'   => $userId,
+                'updated_by'     => $userId,
                 'status'         => $group['status'],
             ];
             foreach ($group['items'] as $item) {
@@ -164,7 +166,7 @@ class ModuleDataSeeder extends Seeder
                     'warranty_type'     => 'standard',
                     'status'            => $w['status'],
                     'approval_notes'    => $w['status'] === 'rejected' ? 'Serial number not found in system' : null,
-                    'approved_by'       => 1,
+                    'approved_by'       => $userId,
                 ]);
             }
         }
@@ -173,12 +175,12 @@ class ModuleDataSeeder extends Seeder
         $rmaTickets = [
             ['order' => 'ORD-RMA-001', 'status' => 'open',                 'customer' => 'Rohan Mehta',   'product' => 'Samsung 870 EVO SSD 500GB', 'issue' => 'hardware_defect', 'platform' => 'amazon'],
             ['order' => 'ORD-RMA-002', 'status' => 'under_review',         'customer' => 'Anjali Kumar',  'product' => 'WD Blue HDD 1TB',           'issue' => 'software_issue',  'platform' => 'flipkart'],
-            ['order' => 'ORD-RMA-003', 'status' => 'approved',             'customer' => 'Deepak Nair',   'product' => 'Kingston RAM 8GB DDR4',     'issue' => 'missing_parts',   'platform' => 'direct'],
+            ['order' => 'ORD-RMA-003', 'status' => 'approved',             'customer' => 'Deepak Nair',   'product' => 'Kingston RAM 8GB DDR4',     'issue' => 'missing_parts',   'platform' => 'other'],
             ['order' => 'ORD-RMA-004', 'status' => 'pickup_pending',       'customer' => 'Meera Shah',    'product' => 'Logitech MX Keys',          'issue' => 'wrong_item',      'platform' => 'amazon'],
-            ['order' => 'ORD-RMA-005', 'status' => 'pickup_completed',     'customer' => 'Arjun Reddy',   'product' => 'Anker USB Hub',             'issue' => 'damaged',         'platform' => 'meesho'],
-            ['order' => 'ORD-RMA-006', 'status' => 'replacement_shipped',  'customer' => 'Kavya Iyer',    'product' => 'Samsung 870 EVO SSD 500GB', 'issue' => 'hardware_defect', 'platform' => 'snapdeal'],
+            ['order' => 'ORD-RMA-005', 'status' => 'pickup_completed',     'customer' => 'Arjun Reddy',   'product' => 'Anker USB Hub',             'issue' => 'damaged',         'platform' => 'other'],
+            ['order' => 'ORD-RMA-006', 'status' => 'replacement_shipped',  'customer' => 'Kavya Iyer',    'product' => 'Samsung 870 EVO SSD 500GB', 'issue' => 'hardware_defect', 'platform' => 'other'],
             ['order' => 'ORD-RMA-007', 'status' => 'rejected',             'customer' => 'Sanjay Tiwari', 'product' => 'WD Blue HDD 1TB',           'issue' => 'hardware_defect', 'platform' => 'flipkart'],
-            ['order' => 'ORD-RMA-008', 'status' => 'closed',               'customer' => 'Divya Rao',     'product' => 'Kingston RAM 8GB DDR4',     'issue' => 'software_issue',  'platform' => 'direct'],
+            ['order' => 'ORD-RMA-008', 'status' => 'closed',               'customer' => 'Divya Rao',     'product' => 'Kingston RAM 8GB DDR4',     'issue' => 'software_issue',  'platform' => 'other'],
         ];
 
         foreach ($rmaTickets as $rma) {
@@ -196,7 +198,7 @@ class ModuleDataSeeder extends Seeder
                     'issue_description' => 'Customer reported: ' . str_replace('_', ' ', $rma['issue']) . '. Needs inspection.',
                     'address'           => '123, Test Street, Mumbai, MH 400001',
                     'replacement_type'  => 'full',
-                    'assigned_to'       => 1,
+                    'assigned_to'       => $userId,
                     'status'            => $rma['status'],
                 ]);
             }
@@ -204,11 +206,11 @@ class ModuleDataSeeder extends Seeder
 
         // Return Reports – all marketplaces, statuses, reasons
         $returnReports = [
-            ['order' => 'AMZ-001', 'marketplace' => 'amazon',   'reason' => 'damaged',        'refund' => 'pending',   'product' => 'Samsung 870 EVO SSD 500GB', 'warehouse' => 'Mumbai Warehouse', 'cost' => 250.00, 'loss' => 1499.00],
-            ['order' => 'FLP-001', 'marketplace' => 'flipkart', 'reason' => 'wrong_item',     'refund' => 'approved',  'product' => 'WD Blue HDD 1TB',           'warehouse' => 'Delhi Warehouse',  'cost' => 100.00, 'loss' => 1295.00],
+            ['order' => 'AMZ-001', 'marketplace' => 'amazon',   'reason' => 'damaged',         'refund' => 'pending',   'product' => 'Samsung 870 EVO SSD 500GB', 'warehouse' => 'Mumbai Warehouse', 'cost' => 250.00, 'loss' => 1499.00],
+            ['order' => 'FLP-001', 'marketplace' => 'flipkart', 'reason' => 'wrong_item',     'refund' => 'processed', 'product' => 'WD Blue HDD 1TB',           'warehouse' => 'Delhi Warehouse',  'cost' => 100.00, 'loss' => 1295.00],
             ['order' => 'AMZ-002', 'marketplace' => 'amazon',   'reason' => 'not_as_described','refund' => 'rejected',  'product' => 'Kingston RAM 8GB DDR4',     'warehouse' => 'Chennai Hub',      'cost' => 150.00, 'loss' => 1799.00],
-            ['order' => 'DIR-001', 'marketplace' => 'direct',   'reason' => 'defective',      'refund' => 'pending',   'product' => 'Logitech MX Keys',          'warehouse' => 'Mumbai Warehouse', 'cost' => 200.00, 'loss' => 7990.00],
-            ['order' => 'MEE-001', 'marketplace' => 'meesho',   'reason' => 'buyer_remorse',  'refund' => 'approved',  'product' => 'Anker USB Hub',             'warehouse' => 'Delhi Warehouse',  'cost' => 80.00,  'loss' => 999.00],
+            ['order' => 'DIR-001', 'marketplace' => 'other',    'reason' => 'defective',      'refund' => 'pending',   'product' => 'Logitech MX Keys',          'warehouse' => 'Mumbai Warehouse', 'cost' => 200.00, 'loss' => 7990.00],
+            ['order' => 'MEE-001', 'marketplace' => 'other',    'reason' => 'buyer_remorse',  'refund' => 'processed', 'product' => 'Anker USB Hub',             'warehouse' => 'Delhi Warehouse',  'cost' => 80.00,  'loss' => 999.00],
             ['order' => 'AMZ-003', 'marketplace' => 'amazon',   'reason' => 'damaged',        'refund' => 'processed', 'product' => 'Samsung 870 EVO SSD 500GB', 'warehouse' => 'Chennai Hub',      'cost' => 300.00, 'loss' => 1499.00],
         ];
 

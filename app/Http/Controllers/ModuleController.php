@@ -139,7 +139,7 @@ class ModuleController extends Controller
     {
         $shipments = FbaAuto::query()
             ->with(['generator', 'updater'])
-            ->orderByDesc('created_at')
+            ->orderByDesc('shipment_date')
             ->get()
             ->groupBy('shipment_id')
             ->map(function ($items) {

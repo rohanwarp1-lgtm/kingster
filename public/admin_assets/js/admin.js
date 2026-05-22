@@ -156,10 +156,23 @@ $(document).ready(function () {
         $('#toggle_btn').attr('aria-expanded', !$('body').hasClass('mini-sidebar'));
     }
 
+    var _dtAdjustTimer;
+    function adjustAllDataTables(delay) {
+        clearTimeout(_dtAdjustTimer);
+        _dtAdjustTimer = setTimeout(function () {
+            $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
+        }, delay || 300);
+    }
+
+    $(window).on('resize orientationchange', function () {
+        adjustAllDataTables(250);
+    });
+
     $(document).on('click', '#toggle_btn', function () {
         $('body').toggleClass('mini-sidebar');
         localStorage.setItem('sidebar-mini', $('body').hasClass('mini-sidebar'));
         syncSidebarToggleState();
+        adjustAllDataTables();
         return false;
     });
     $(document).on('mouseenter', '.sidebar', function () {
@@ -168,8 +181,28 @@ $(document).ready(function () {
     $(document).on('mouseleave', '.sidebar', function () {
         if ($('body').hasClass('mini-sidebar')) $('body').removeClass('expand-menu');
     });
-    if (localStorage.getItem('sidebar-mini') === 'true') $('body').addClass('mini-sidebar');
+    if (localStorage.getItem('sidebar-mini') === 'true' && $(window).width() >= 992) {
+        $('body').addClass('mini-sidebar');
+        adjustAllDataTables();
+    }
     syncSidebarToggleState();
+
+    // ── Mobile sidebar toggle ─────────────────────────────────────────────────
+    function closeMobileSidebar() {
+        $('body').removeClass('slide-nav');
+        $('#sidebar-overlay').removeClass('opened');
+        $('html').removeClass('menu-opened');
+    }
+
+    $(document).on('click', '#mobile_btn', function () {
+        $('body').toggleClass('slide-nav');
+        $('#sidebar-overlay').toggleClass('opened');
+        $('html').toggleClass('menu-opened');
+    });
+    $(document).on('click', '#sidebar-overlay', closeMobileSidebar);
+    $(document).on('click', '.sidebar-menu a', function () {
+        if ($(window).width() < 992) closeMobileSidebar();
+    });
 
     // ── Password visibility toggle ────────────────────────────────────────────
     $(document).on('click', '#togglePassword', function () {
@@ -296,8 +329,9 @@ function warrantyDelete(id) {
     }).then(function (result) {
         if (!result.isConfirmed) return;
         $.ajax({
-            type: 'GET',
-            url : deleteWarrantyURL + '?id=' + id,
+            type: 'POST',
+            url : deleteWarrantyURL,
+            data: { id: id },
             success: function (res) {
                 if (res.status == 1) { toastr.success(res.message); $('#datatable').DataTable().ajax.reload(null, false); }
                 else toastr.error(res.message || 'Failed');
@@ -308,8 +342,9 @@ function warrantyDelete(id) {
 
 function warrantyRestore(id) {
     $.ajax({
-        type: 'GET',
-        url : restoreWarrantyURL + '?id=' + id,
+        type: 'POST',
+        url : restoreWarrantyURL,
+        data: { id: id },
         success: function (res) {
             if (res.status == 1) { toastr.success(res.message); $('#datatable').DataTable().ajax.reload(null, false); }
             else toastr.error(res.message || 'Failed');
@@ -364,8 +399,9 @@ function userDelete(id) {
     }).then(function (result) {
         if (!result.isConfirmed) return;
         $.ajax({
-            type: 'GET',
-            url : userDeleteURL + '?id=' + id,
+            type: 'POST',
+            url : userDeleteURL,
+            data: { id: id },
             success: function (res) {
                 if (res.status == 1) { toastr.success(res.message); $('#datatable_2').DataTable().ajax.reload(null, false); }
                 else toastr.error(res.message || 'Failed');
@@ -376,8 +412,9 @@ function userDelete(id) {
 
 function userRestore(id) {
     $.ajax({
-        type: 'GET',
-        url : userRestoreURL + '?id=' + id,
+        type: 'POST',
+        url : userRestoreURL,
+        data: { id: id },
         success: function (res) {
             if (res.status == 1) { toastr.success(res.message); $('#datatable_2').DataTable().ajax.reload(null, false); }
             else toastr.error(res.message || 'Failed');
@@ -395,8 +432,9 @@ function productDelete(id) {
     }).then(function (result) {
         if (!result.isConfirmed) return;
         $.ajax({
-            type: 'GET',
-            url : productDeleteURL + '?id=' + id,
+            type: 'POST',
+            url : productDeleteURL,
+            data: { id: id },
             success: function (res) {
                 if (res.status == 1) { toastr.success(res.message); $('#datatable_1').DataTable().ajax.reload(null, false); }
                 else toastr.error(res.message || 'Failed');
@@ -407,8 +445,9 @@ function productDelete(id) {
 
 function productRestore(id) {
     $.ajax({
-        type: 'GET',
-        url : productRestoreURL + '?id=' + id,
+        type: 'POST',
+        url : productRestoreURL,
+        data: { id: id },
         success: function (res) {
             if (res.status == 1) { toastr.success(res.message); $('#datatable_1').DataTable().ajax.reload(null, false); }
             else toastr.error(res.message || 'Failed');
@@ -445,8 +484,9 @@ function productNameDelete(id) {
     }).then(function (result) {
         if (!result.isConfirmed) return;
         $.ajax({
-            type: 'GET',
-            url : deleteProductNameURL + '?id=' + id,
+            type: 'POST',
+            url : deleteProductNameURL,
+            data: { id: id },
             success: function (res) {
                 if (res.status == 1 || res.success) { toastr.success(res.message || 'Deleted!'); $('#datatable_3').DataTable().ajax.reload(null, false); }
                 else toastr.error(res.message || 'Failed');
@@ -457,8 +497,9 @@ function productNameDelete(id) {
 
 function productNameRestore(id) {
     $.ajax({
-        type: 'GET',
-        url : restoreProductNameURL + '?id=' + id,
+        type: 'POST',
+        url : restoreProductNameURL,
+        data: { id: id },
         success: function (res) {
             if (res.status == 1 || res.success) { toastr.success(res.message || 'Restored!'); $('#datatable_3').DataTable().ajax.reload(null, false); }
             else toastr.error(res.message || 'Failed');

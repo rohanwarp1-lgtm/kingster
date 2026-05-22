@@ -18,9 +18,9 @@
         </div>
 
         {{-- Stat Cards --}}
-        <div class="row g-3 mb-4">
-            <div class="col-xl-3 col-sm-6">
-                <div class="card stat-card stat-purple">
+        <div class="row g-2 stat-tiles mb-4">
+            <div class="col-xl-3 col-sm-6 col-12 d-flex">
+                <div class="card stat-card stat-purple w-100">
                     <div class="card-body">
                         <div class="db-widgets d-flex justify-content-between align-items-center">
                             <div class="db-info">
@@ -34,8 +34,8 @@
                     </div>
                 </div>
             </div>
-            <div class="col-xl-3 col-sm-6">
-                <div class="card stat-card stat-green">
+            <div class="col-xl-3 col-sm-6 col-12 d-flex">
+                <div class="card stat-card w-100 stat-green">
                     <div class="card-body">
                         <div class="db-widgets d-flex justify-content-between align-items-center">
                             <div class="db-info">
@@ -49,8 +49,8 @@
                     </div>
                 </div>
             </div>
-            <div class="col-xl-3 col-sm-6">
-                <div class="card stat-card stat-orange">
+            <div class="col-xl-3 col-sm-6 col-12 d-flex">
+                <div class="card stat-card w-100 stat-orange">
                     <div class="card-body">
                         <div class="db-widgets d-flex justify-content-between align-items-center">
                             <div class="db-info">
@@ -64,8 +64,8 @@
                     </div>
                 </div>
             </div>
-            <div class="col-xl-3 col-sm-6">
-                <div class="card stat-card stat-blue">
+            <div class="col-xl-3 col-sm-6 col-12 d-flex">
+                <div class="card stat-card w-100 stat-blue">
                     <div class="card-body">
                         <div class="db-widgets d-flex justify-content-between align-items-center">
                             <div class="db-info">

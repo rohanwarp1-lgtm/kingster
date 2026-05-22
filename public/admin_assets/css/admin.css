@@ -37,7 +37,7 @@ Version      : 1.0
 /*-----------------
 	1. General
 -----------------------*/
-@import url("/assets/css/inter-local.css");
+@import url("../../assets/css/inter-local.css");
 html {
   height: 100%;
   background-color: #fff;

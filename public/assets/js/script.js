@@ -2945,13 +2945,12 @@ $(document).ready(function () {
                 product_name: $("#productName").val(),
                 serial_number: $("#serialNumber").val(),
                 purchase_date: $("#purchaseDate").val(),
-                _token: '{{ csrf_token() }}'
             };
             var storeWarrantyUrl = $('#warrantyFormSubmit').data('url');
 
             $.ajax({
                 url: storeWarrantyUrl,
-                type: "GET",
+                type: "POST",
                 data: formData,
                 success: function (response) {
                     if(response['status'] == 400){
@@ -2993,7 +2992,7 @@ $(document).ready(function () {
 
             $.ajax({
                 url: storeWarrantyAJAXUrl,
-                type: "GET",
+                type: "POST",
                 data: formData,
                 success: function (response) {
                     $('#warrantyResultContainer').empty();

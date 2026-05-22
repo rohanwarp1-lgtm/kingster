@@ -17,6 +17,11 @@ class AutoMigrate
 
     public function handle(Request $request, Closure $next)
     {
+        // Only run on local/staging — production deployments must run migrations explicitly
+        if (app()->environment('production')) {
+            return $next($request);
+        }
+
         // Only check once per session to avoid overhead on every request
         if (!session(self::SESSION_KEY)) {
             $this->ensureSchemaUpToDate();

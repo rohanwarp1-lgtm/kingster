@@ -3,17 +3,17 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Session;
 use App\Models\Warranty;
+use App\Traits\DataTableTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 
 
 
 class WarrantyController extends Controller
 {
+    use DataTableTrait;
     public function save(Request $request)
     {
         $type = $request->get('type', 'application');
@@ -122,8 +122,8 @@ class WarrantyController extends Controller
             'expiry_date' => $expiryDate->toDateString(),
             'warranty_status' => 'Pending',
             'is_deleted' => 0,
-            'created_by' => 1,
-            'modified_by' => 1,
+            'created_by' => null,
+            'modified_by' => null,
         ]);
 
         activity('warranty')->causedBy(auth()->user() ?? null)->withProperties(['serial_number' => $serial, 'product' => $request->product_name])->log('created');
@@ -158,22 +158,13 @@ class WarrantyController extends Controller
                 7 => 'warranty_records.expiry_date',
             ];
 
-            $selectColumns = [
-                'warranty_records.*',
-                'u1.username as created_by_name',
-                'u2.username as modified_by_name',
-            ];
+            $recordsTotal = Warranty::count();
 
-            // Base query with joins
             $query = Warranty::query()
                 ->leftJoin('users as u1', 'u1.id', '=', 'warranty_records.created_by')
                 ->leftJoin('users as u2', 'u2.id', '=', 'warranty_records.modified_by');
 
-            // Total records before filtering
-            $recordsTotal = Warranty::count();
-
-            // Filters
-            if ($request->filled('warranty_status') && $request->warranty_status != 'All') {
+            if ($request->filled('warranty_status') && $request->warranty_status !== 'All') {
                 $query->where('warranty_records.warranty_status', $request->warranty_status);
             }
 
@@ -181,93 +172,57 @@ class WarrantyController extends Controller
                 $query->where('warranty_records.is_deleted', $request->status_filter);
             }
 
-            // Search
-            if ($request->has('search') && !empty($request->search['value'])) {
-                $search = $request->search['value'];
-                $query->where(function ($q) use ($search, $searchColumns) {
-                    foreach ($searchColumns as $column) {
-                        $q->orWhere($column, 'like', "%$search%");
-                    }
-                });
-            }
-
-            $recordsFiltered = $query->count();
-
-            // Sorting
-            if ($request->has('order') && isset($request->order[0])) {
-                $colIndex = $request->order[0]['column'];
-                $colDir = $request->order[0]['dir'];
-                if (isset($sortingColumns[$colIndex])) {
-                    $query->orderBy($sortingColumns[$colIndex], $colDir);
-                }
-            } else {
+            if (empty($request['order'][0])) {
                 $query->orderBy('warranty_records.id', 'desc');
             }
 
-            // Pagination
-            $start = $request->input('start', 0);
-            $length = $request->input('length', 10);
-            $query->skip($start)->take($length != -1 ? $length : $recordsTotal);
+            $recordsFiltered = $this->applyDataTableQuery($query, $request, $searchColumns, $sortingColumns, $recordsTotal);
 
-            $data = $query->get($selectColumns);
+            $selectColumns = [
+                'warranty_records.*',
+                'u1.username as created_by_name',
+                'u2.username as modified_by_name',
+            ];
 
-            $viewData = [];
-            foreach ($data as $item) {
-                $row = [];
+            $colorMap = [
+                'Pending'  => 'badge bg-warning',
+                'Active'   => 'badge bg-success',
+                'Expired'  => 'badge bg-danger',
+                'Rejected' => 'badge bg-secondary',
+            ];
 
-                // Action
-                $uiAction = '<ul class="list-inline font-size-20 contact-links mb-0">';
-                if($item->is_deleted == 0){
-                    $uiAction .= '<li class="list-inline-item px-1"><a href="javascript:void(0);" title="Delete" onclick="warrantyDelete(' . $item->id . ')"><i class="fe fe-trash text-danger"></i></a></li>';
-                }else{
-                    $uiAction .= '<li class="list-inline-item px-1"><a href="javascript:void(0);" title="Restore" onclick="warrantyRestore(' . $item->id . ')"><i class="fe fe-rotate-ccw text-success"></i></a></li>';
-                }
-                $uiAction .= '<li class="list-inline-item px-1"><a href="javascript:void(0);" title="Change Status" onclick="changeWarrantyStatus(' . $item->id . ', \'' . $item->warranty_status . '\')"><i class="fe fe-sliders text-primary"></i></a></li>';
-                $uiAction .= '</ul>';
-                
-                $row['action'] = $uiAction;
+            $viewData = $query->get($selectColumns)->map(function ($item) use ($colorMap) {
+                $colorClass = $colorMap[$item->warranty_status] ?? 'badge bg-primary';
+                return [
+                    'action'         => view('admin.partials.datatable.warranty-actions', ['item' => $item])->render(),
+                    'warranty_status'=> '<span class="' . $colorClass . '">' . e($item->warranty_status) . '</span>',
+                    'buyer_name'     => $item->user_name ?? '-',
+                    'mobile'         => $item->mobile_number ?? '-',
+                    'email'          => $item->email ?? '-',
+                    'source'         => $item->purchase_source ?? '-',
+                    'product_name'   => $item->product_name ?? '-',
+                    'serial_number'  => $item->serial_number ?? '-',
+                    'purchase_date'  => $item->purchase_date ? Carbon::parse($item->purchase_date)->format('d-M-Y') : '-',
+                    'expiry_date'    => $item->expiry_date ? Carbon::parse($item->expiry_date)->format('d-M-Y') : '-',
+                    'address'        => $item->address ?? '-',
+                    'created_by'     => $item->created_by_name ?? 'System',
+                    'modified_by'    => $item->modified_by_name ?? '-',
+                ];
+            })->values()->all();
 
-                // Status Badge
-                $status = ucfirst($item->warranty_status);
-                $colorClass = match ($item->warranty_status) {
-                    'Pending'  => 'badge bg-warning',
-                    'Active'   => 'badge bg-success',
-                    'Expired'  => 'badge bg-danger',
-                    'Rejected' => 'badge bg-secondary',
-                    default    => 'badge bg-primary'
-                };
-                $row['warranty_status'] = '<span class="' . $colorClass . '">' . $status . '</span>';
+            return $this->dataTableJson($request, $recordsTotal, $recordsFiltered, $viewData);
 
-                $row['buyer_name'] = $item->user_name ?? '-';
-                $row['mobile'] = $item->mobile_number ?? '-';
-                $row['email'] = $item->email ?? '-';
-                $row['source'] = $item->purchase_source ?? '-';
-                $row['product_name'] = $item->product_name ?? '-';
-                $row['serial_number'] = $item->serial_number ?? '-';
-                $row['purchase_date'] = $item->purchase_date ? Carbon::parse($item->purchase_date)->format('d-M-Y') : '-';
-                $row['expiry_date'] = $item->expiry_date ? Carbon::parse($item->expiry_date)->format('d-M-Y') : '-';
-                $row['address'] = $item->address ?? '-';
-                $row['created_by'] = $item->created_by_name ?? 'System';
-                $row['modified_by'] = $item->modified_by_name ?? '-';
-
-                $viewData[] = $row;
-            }
-
-            return response()->json([
-                'draw' => intval($request->draw),
-                'recordsTotal' => $recordsTotal,
-                'recordsFiltered' => $recordsFiltered,
-                'data' => $viewData,
-            ]);
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => $e->getMessage(),
-                'stack' => $e->getTraceAsString()
-            ], 500);
+            return response()->json(['error' => 'Failed to load warranty data.'], 500);
         }
     }
 
     public function changeStatus(Request $request){
+        $request->validate([
+            'id'     => 'required|integer',
+            'status' => 'required|in:Pending,Active,Expired,Rejected',
+        ]);
+
         try {
             $warranty = Warranty::findOrFail($request->id);
             $warranty->warranty_status = $request->status;

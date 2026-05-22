@@ -80,7 +80,7 @@ Route::get('replacement-policy', function () {
     $generalSettings = \App\Models\GeneralSetting::first();
     return view('warranty-rules', compact('generalSettings'));
 })->name('warranty.replacement.policy');
-Route::get('store-warranty', [WarrantyController::class, 'save'])->name('store.warranty.details');
+Route::post('store-warranty', [WarrantyController::class, 'save'])->name('store.warranty.details');
 
 
 Route::get('signout', [CustomAuthController::class, 'signOut'])->name('signout');
@@ -96,15 +96,15 @@ Route::middleware(['auth', \App\Http\Middleware\AutoMigrate::class])->prefix('ad
         Route::post('user-ajax', [UserController::class, 'ajax'])->name('user.ajax');
         Route::post('user-save', [UserController::class, 'save'])->name('user.save');
         Route::get('get-user-details', [UserController::class, 'getDetails'])->name('get.user.details');
-        Route::get('user-delete', [UserController::class, 'delete'])->name('delete.user');
-        Route::get('user-restore', [UserController::class, 'restore'])->name('restore.user');
+        Route::post('user-delete', [UserController::class, 'delete'])->name('delete.user');
+        Route::post('user-restore', [UserController::class, 'restore'])->name('restore.user');
 
 
         Route::get('warranty-management', [CustomAuthController::class, 'warrantyManagement'])->name('admin.warranty.management');
         Route::post('warranty-ajax', [WarrantyController::class, 'ajax'])->name('warranty.ajax');
         Route::post('warranty-status-change', [WarrantyController::class, 'changeStatus'])->name('warranty.change.status');
-        Route::get('warranty-delete', [WarrantyController::class, 'delete'])->name('delete.warranty');
-        Route::get('warranty-restore', [WarrantyController::class, 'restore'])->name('restore.warranty');
+        Route::post('warranty-delete', [WarrantyController::class, 'delete'])->name('delete.warranty');
+        Route::post('warranty-restore', [WarrantyController::class, 'restore'])->name('restore.warranty');
 
 
         Route::get('product-management', [ProductController::class, 'index'])->name('product.index');
@@ -112,8 +112,8 @@ Route::middleware(['auth', \App\Http\Middleware\AutoMigrate::class])->prefix('ad
         Route::get('edit-product', [ProductController::class, 'editProduct'])->name('edit.product.view');
         Route::post('save-product', [ProductController::class, 'saveProduct'])->name('product.store');
         Route::post('product-ajax', [ProductController::class, 'productAjax'])->name('product.ajax');
-        Route::get('product-delete', [ProductController::class, 'deleteProduct'])->name('product.delete');
-        Route::get('product-restore', [ProductController::class, 'restoreProduct'])->name('product.restore');
+        Route::post('product-delete', [ProductController::class, 'deleteProduct'])->name('product.delete');
+        Route::post('product-restore', [ProductController::class, 'restoreProduct'])->name('product.restore');
         Route::post('delete-product-image', [ProductController::class, 'deleteProductImage'])->name('delete.product.image');
         Route::post('update-product-indexing', [ProductController::class, 'updateIndexing'])->name('admin.product.updateIndexing');
 
@@ -122,8 +122,8 @@ Route::middleware(['auth', \App\Http\Middleware\AutoMigrate::class])->prefix('ad
         Route::post('product-name-ajax', [ProductController::class, 'productNameAjax'])->name('product.name.ajax');
         Route::post('save-product-name', [ProductController::class, 'saveProductName'])->name('product.name.store');
         Route::get('product-name-details', [ProductController::class, 'productNameDetails'])->name('product.name.details');
-        Route::get('product-name-delete', [ProductController::class, 'deleteProductName'])->name('delete.product.name');
-        Route::get('product-name-restore', [ProductController::class, 'restoreProductName'])->name('restore.product.name');
+        Route::post('product-name-delete', [ProductController::class, 'deleteProductName'])->name('delete.product.name');
+        Route::post('product-name-restore', [ProductController::class, 'restoreProductName'])->name('restore.product.name');
 
 
 

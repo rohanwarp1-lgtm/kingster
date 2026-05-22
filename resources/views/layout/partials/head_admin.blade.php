@@ -210,6 +210,13 @@
     .card-title { font-size: 15px; font-weight: 600; color: var(--dark); margin: 0; }
     .card-body { padding: 20px !important; }
 
+    /* ---- Stat tiles — no icon, single-line label + value ---- */
+    .db-icon { display: none !important; }
+    .db-widgets { width: 100%; }
+    .db-info { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; width: 100%; }
+    .db-info h6 { margin: 0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .db-info h3 { margin: 0; white-space: nowrap; flex-shrink: 0; }
+
     /* ---- Legacy bg-comman (used by module views) ---- */
     .bg-comman {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
@@ -529,6 +536,9 @@
         border: 1px solid #dce4ff; color: var(--dark); font-weight: 600;
     }
 
+    /* ---- Mobile header logo (hidden on desktop) ---- */
+    .mobile-header-logo { display: none; }
+
     /* ---- Misc ---- */
     .clear-btn { border: 1px solid var(--danger); border-radius: 4px; padding: 1px 6px; font-size: 11px; cursor: pointer; line-height: 18px; }
     .pos-middle { vertical-align: middle; }
@@ -571,6 +581,70 @@
         }
         div.dataTables_wrapper div.dataTables_paginate ul.pagination {
             justify-content: flex-start !important; overflow-x: auto;
+        }
+
+        /* Hide desktop-only header elements */
+        #toggle_btn { display: none !important; }
+        .viewsite { display: none !important; }
+
+        /* Reduce stat tile icon size on mobile */
+        .db-icon { width: 38px !important; height: 38px !important; border-radius: 10px !important; }
+        .db-icon i { font-size: 18px !important; }
+
+        /* Stat tiles — applied on all module pages */
+        .stat-tiles { --bs-gutter-y: 0 !important; }
+        .stat-tiles .card { margin-bottom: 15px; }
+        .stat-tiles .card-body { padding-top: 8px !important; padding-bottom: 8px !important; }
+        #mobile_btn.mobile_btn {
+            display: flex; align-items: center; justify-content: center;
+            position: static; width: 40px; height: 40px; flex-shrink: 0;
+            font-size: 20px; color: var(--dark);
+            border: 1px solid var(--border); border-radius: 10px;
+            background: #fff; cursor: pointer;
+        }
+
+        /* Mobile logo in header */
+        .mobile-header-logo {
+            display: flex; align-items: center; gap: 8px;
+            text-decoration: none; flex: 1; margin-left: 12px;
+        }
+        .header-split { gap: 12px; margin-right: 5px; }
+        .mobile-header-logo .logo-icon {
+            width: 32px; height: 32px; min-width: 32px;
+            background: var(--gradient); color: #fff;
+            font-size: 15px; font-weight: 800;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 8px;
+        }
+        .mobile-header-logo .logo-text {
+            font-size: 15px; font-weight: 800; letter-spacing: 2px;
+            text-transform: uppercase;
+            background: var(--gradient); -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; background-clip: text;
+        }
+
+        /* Mobile sidebar — starts below header so header stays always visible */
+        .header, .main-wrapper > .header { z-index: 1055 !important; }
+        .sidebar {
+            margin-left: calc(-1 * var(--sidebar-w)) !important;
+            width: var(--sidebar-w) !important;
+            position: fixed; top: var(--header-h); height: calc(100vh - var(--header-h));
+            z-index: 1050; transition: margin-left .3s ease;
+            overflow-x: hidden; overflow-y: auto;
+        }
+        .sidebar .header-left { display: none; }
+        .slide-nav .sidebar { margin-left: 0 !important; }
+        #sidebar-overlay { top: var(--header-h) !important; }
+        /* Reset mini-sidebar overrides on mobile */
+        .mini-sidebar .sidebar,
+        .mini-sidebar.expand-menu .sidebar { width: var(--sidebar-w) !important; }
+        .mini-sidebar .sidebar-menu li a span,
+        .mini-sidebar .menu-title span { display: inline !important; }
+        .mini-sidebar .sidebar-menu li a { justify-content: flex-start !important; padding: 0 14px !important; }
+        .mini-sidebar .sidebar-menu li a i { margin-right: 12px !important; }
+        .sidebar-menu li a span {
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            flex: 1; min-width: 0;
         }
     }
 </style>

@@ -9,6 +9,7 @@
     <div class="main-wrapper">
         @include('layout.partials.header_admin')
         @include('layout.partials.sidebar_admin')
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
         @yield('content')
     </div>
 

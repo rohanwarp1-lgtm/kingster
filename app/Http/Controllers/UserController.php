@@ -10,6 +10,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Traits\DataTableTrait;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
+    use DataTableTrait;
     public function index(){
         if (Auth::user()->role != 'Super Admin' && Auth::user()->role != 'CEO') {
             return redirect()->route('admin.warranty.management');
@@ -28,7 +30,8 @@ class UserController extends Controller
 
         $isEdit = isset($request->user_id) && !empty($request->user_id);
         $changePassword = $request->has('change_password') && $request->change_password;
-        $isCEOEditingSelf = $isEdit && $request->user_id == 1; // CEO editing their own profile
+        $editTarget = $isEdit ? User::find($request->user_id) : null;
+        $isCEOEditingSelf = $isEdit && $editTarget && $editTarget->role === 'CEO';
 
         $rules = [
             'user_name'     => 'required|string|max:255|unique:users,username' . ($isEdit ? ',' . $request->user_id : ''),
@@ -84,12 +87,7 @@ class UserController extends Controller
     }
 
     public function ajax(Request $request){
-        $searchColumns = [
-            'id',
-            'username',
-            'email',
-            'role',
-        ];
+        $searchColumns = ['id', 'username', 'email', 'role'];
 
         $sortingColumns = [
             0 => 'id',
@@ -98,37 +96,15 @@ class UserController extends Controller
             3 => 'role',
         ];
 
+        $recordsTotal = User::count();
+
         $query = User::query();
 
-        // Filter by status (deleted/active)
         if (isset($request->status_filter)) {
             $query->where('is_deleted', $request->status_filter);
         }
 
-        // Sorting
-        if (isset($request['order'][0])) {
-            $query->orderBy(
-                $sortingColumns[$request['order'][0]['column']],
-                $request['order'][0]['dir']
-            );
-        }
-
-        // Search
-        if (!empty($request['search']['value'])) {
-            $search = $request['search']['value'];
-            $query->where(function ($q) use ($search, $searchColumns) {
-                foreach ($searchColumns as $i => $column) {
-                    $i === 0 ? $q->where($column, 'like', "%$search%")
-                            : $q->orWhere($column, 'like', "%$search%");
-                }
-            });
-        }
-
-        $recordsTotal = User::count();
-        $recordsFiltered = $query->count();
-
-        // Pagination
-        $query->skip($request->start)->take($request->length != -1 ? $request->length : $recordsTotal);
+        $recordsFiltered = $this->applyDataTableQuery($query, $request, $searchColumns, $sortingColumns, $recordsTotal);
 
         $data = $query->get();
 
@@ -137,28 +113,7 @@ class UserController extends Controller
         foreach ($data as $item) {
             $row = [];
 
-            // Action column
-            $uiAction = '<ul class="list-inline font-size-20 contact-links mb-0">';
-
-            if($item->is_deleted == 0){
-                if($item->id != 1){
-                    if($item->id != Auth::user()->id){
-                        $uiAction .= '<li class="list-inline-item px-2 pos-middle"><a href="javascript:void(0);" onclick="userDelete(' . $item->id . ')"><i class="fe fe-trash"></i></a></li>';
-                    }
-                    $uiAction .= '<li class="list-inline-item px-2 pos-middle"><a href="javascript:void(0);" onclick="editUserCredentials(' . $item->id . ')"><i class="fe fe-edit"></i></a></li>';
-                }
-
-                if(Auth::user()->id == 1 && $item->id == 1){
-                    $uiAction .= '<li class="list-inline-item px-2 pos-middle"><a href="javascript:void(0);" onclick="editUserCredentials(' . $item->id . ')"><i class="fe fe-edit"></i></a></li>';
-                }
-            }else{
-                if($item->id != 1){
-                    $uiAction .= '<li class="list-inline-item px-2 pos-middle"><a href="javascript:void(0);" onclick="userRestore(' . $item->id . ')"><i class="fe fe-rotate-ccw"></i></a></li>';
-                }
-            }
-
-            $uiAction .= '</ul>';
-            $row['action'] = $uiAction;
+            $row['action'] = view('admin.partials.datatable.user-actions', ['item' => $item])->render();
             $row['username'] = $item->username;
             $row['email'] = $item->email;
             $row['role'] = ucfirst($item->role);
@@ -166,19 +121,14 @@ class UserController extends Controller
             $viewData[] = $row;
         }
 
-        return response()->json([
-            'draw' => intval($request->draw),
-            'recordsTotal' => $recordsTotal,
-            'recordsFiltered' => $recordsFiltered,
-            'data' => $viewData,
-        ]);
+        return $this->dataTableJson($request, $recordsTotal, $recordsFiltered, $viewData);
     }
 
     public function delete(Request $request){
         try {
             $user = User::find($request->id);
             if($user){
-                if($user->id == 1){
+                if($user->role === 'CEO'){
                     return response()->json(['status' => false, 'message' => 'CEO cannot be deleted!']);
                 }
                 $user->is_deleted = 1;

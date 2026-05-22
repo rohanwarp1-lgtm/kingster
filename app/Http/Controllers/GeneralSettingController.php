@@ -58,7 +58,8 @@ class GeneralSettingController extends Controller
             if ($request->hasFile($field)) {
                 $image = $request->file($field);
                 $uniqueName = time() . '_' . mt_rand(100000, 999999);
-                $imageName = $uniqueName . "_general_setting_" . $image->getClientOriginalName();
+                $ext = strtolower($image->getClientOriginalExtension());
+                $imageName = $uniqueName . '_general_setting.' . $ext;
                 $image->move(base_path('public/uploads/general_settings'), $imageName);
                 $setting->$field = 'uploads/general_settings/' . $imageName;
             }

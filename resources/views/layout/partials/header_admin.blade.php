@@ -1,4 +1,11 @@
 <div class="header">
+    {{-- Mobile logo (hidden on desktop, shown on mobile) --}}
+    <a href="{{ route('admin.warranty.management') }}" class="mobile-header-logo">
+        <span class="logo-icon">K</span>
+        <span class="logo-text">KINGSTER</span>
+    </a>
+
+    {{-- Desktop sidebar toggle (hidden on mobile via CSS) --}}
     <div class="admin-header-left">
         <button type="button" id="toggle_btn" class="admin-sidebar-toggle" aria-label="Toggle sidebar" aria-expanded="true">
             <i class="fe fe-menu"></i>
@@ -31,5 +38,10 @@
                 </a>
             </div>
         </div>
+
+        {{-- Mobile hamburger — inside header-split so it sits next to the avatar --}}
+        <a href="javascript:void(0)" id="mobile_btn" class="mobile_btn" aria-label="Toggle mobile menu">
+            <i class="fe fe-menu"></i>
+        </a>
     </div>
 </div>

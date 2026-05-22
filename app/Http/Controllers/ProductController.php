@@ -3,19 +3,16 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Hash;
-use Session;
-use App\Models\User;
-use App\Models\Warranty;
 use App\Models\Product;
+use App\Models\ProductName;
+use App\Traits\DataTableTrait;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use App\Models\ProductName;
 
 class ProductController extends Controller
 {
+    use DataTableTrait;
     public function index(){
         $products = Product::where('is_deleted', 0)->orderBy('index')->get();
         return view('admin.product', compact('products'));
@@ -107,7 +104,8 @@ class ProductController extends Controller
 
             $uniqueName = time() . '_' . mt_rand(100000, 999999);
             $image = $request->file($default_img);
-            $imageName = $uniqueName . "_default_" . $image->getClientOriginalName();
+            $ext = strtolower($image->getClientOriginalExtension());
+            $imageName = $uniqueName . '_default.' . $ext;
             $destination = base_path('public/assets/products');
             File::ensureDirectoryExists($destination);
             $image->move($destination, $imageName);
@@ -124,8 +122,8 @@ class ProductController extends Controller
                 }
                 $image = $request->file($imgKey);
                 $uniqueName = time() . '_' . mt_rand(100000, 999999);
-
-                $imageName = $uniqueName . "_{$i}_" . $image->getClientOriginalName();
+                $ext = strtolower($image->getClientOriginalExtension());
+                $imageName = $uniqueName . "_{$i}." . $ext;
                 $destination = base_path('public/assets/products');
                 File::ensureDirectoryExists($destination);
                 $image->move($destination, $imageName);
@@ -179,12 +177,10 @@ class ProductController extends Controller
             'products.sold_count',
             'u1.username',
             'u2.username',
-            DB::raw("DATE_FORMAT(products.created_at, '%d-%m-%Y')"),
-            DB::raw("DATE_FORMAT(products.updated_at, '%d-%m-%Y')"),
         ];
 
         $sortingColumns = [
-            0 => 'products.id', // Action column - not sortable but included for index match
+            0 => 'products.id',
             1 => 'products.product_name',
             2 => 'products.offer_price',
             3 => 'products.original_price',
@@ -197,85 +193,42 @@ class ProductController extends Controller
             10 => 'products.updated_at',
         ];
 
-        $selectColumns = [
-            'products.id',
-            'products.product_name',
-            'products.offer_price',
-            'products.original_price',
-            'products.rating',
-            'products.review_count',
-            'products.sold_count',
-            'u1.username as created_by',
-            'u2.username as modified_by',
-            'products.created_at',
-            'products.updated_at',
-            'products.is_deleted',
-        ];
-
         $recordsTotal = Product::where('products.is_deleted', 0)->count();
 
-        $query = Product::query();
-        $query->select($selectColumns);
-		$query->leftJoin('users as u1', 'u1.id', '=', 'products.created_by');
-		$query->leftJoin('users as u2', 'u2.id', '=', 'products.modified_by');
+        $query = Product::query()
+            ->select([
+                'products.id', 'products.product_name', 'products.offer_price',
+                'products.original_price', 'products.rating', 'products.review_count',
+                'products.sold_count', 'products.created_at', 'products.updated_at',
+                'products.is_deleted',
+                'u1.username as created_by', 'u2.username as modified_by',
+            ])
+            ->leftJoin('users as u1', 'u1.id', '=', 'products.created_by')
+            ->leftJoin('users as u2', 'u2.id', '=', 'products.modified_by');
 
-        if(isset($request->status_filter)){
+        if (isset($request->status_filter)) {
             $query->where('products.is_deleted', $request->status_filter);
         }
 
-        if (isset($request['order'][0])) {
-            $query->orderBy(
-                $sortingColumns[$request['order'][0]['column']],
-                $request['order'][0]['dir']
-            );
-        }
-        if (!empty($request['search']['value'])) {
-            $search = $request['search']['value'];
-            $query->where(function ($q) use ($search, $searchColumns) {
-                foreach ($searchColumns as $i => $column) {
-                    $i === 0 ? $q->where($column, 'like', "%$search%")
-                            : $q->orWhere($column, 'like', "%$search%");
-                }
-            });
-        }
-        $recordsFiltered = $query->count();
-        $query->skip($request->start)->take($request->length != -1 ? $request->length : $recordsTotal);
-        $data = $query->get();
+        $recordsFiltered = $this->applyDataTableQuery($query, $request, $searchColumns, $sortingColumns, $recordsTotal);
 
-        $viewData = [];
-        foreach ($data as $item) {
-            $row = [];
+        $viewData = $query->get()->map(function ($item) {
+            return [
+                'action'         => view('admin.partials.datatable.product-actions', ['item' => $item])->render(),
+                'product_name'   => $item->product_name,
+                'created_by'     => $item->created_by,
+                'modified_by'    => $item->modified_by,
+                'offer_price'    => $item->offer_price,
+                'original_price' => $item->original_price,
+                'rating'         => $item->rating,
+                'review_count'   => $item->review_count,
+                'sold_count'     => $item->sold_count,
+                'created_at'     => date('d-m-Y', strtotime($item->created_at)),
+                'updated_at'     => date('d-m-Y', strtotime($item->updated_at)),
+            ];
+        })->values()->all();
 
-			$uiAction = '<ul class="list-inline font-size-20 contact-links mb-0">';
-            if($item->is_deleted == 0){
-                $uiAction .= '<li class="list-inline-item px-2 pos-middle"><a href="javascript:void(0);" onclick="productDelete(' . $item->id . ')"><i class="fe fe-trash"></i></a></li>';
-            }else{
-                $uiAction .= '<li class="list-inline-item px-2 pos-middle"><a href="javascript:void(0);" onclick="productRestore(' . $item->id . ')"><i class="fe fe-rotate-ccw"></i></a></li>';
-            }
-            $uiAction .= '<li class="list-inline-item px-2 pos-middle"><a href="' . url('admin/edit-product?id=' . $item->id) . '"><i class="fe fe-edit"></i></a></li>';
-			$uiAction .= '</ul>';
-
-			$row['action'] = $uiAction;
-            $row['product_name'] = $item->product_name;
-            $row['created_by'] = $item->created_by;
-            $row['modified_by'] = $item->modified_by;
-            $row['offer_price'] = $item->offer_price;
-            $row['original_price'] = $item->original_price;
-            $row['rating'] = $item->rating;
-            $row['review_count'] = $item->review_count;
-            $row['sold_count'] = $item->sold_count;
-            $row['created_at'] = date('d-m-Y', strtotime($item->created_at));
-            $row['updated_at'] = date('d-m-Y', strtotime($item->updated_at));
-
-            $viewData[] = $row;
-        }
-
-        return response()->json([
-            'draw' => intval($request->draw),
-            'recordsTotal' => $recordsTotal,
-            'recordsFiltered' => $recordsFiltered,
-            'data' => $viewData,
-        ]);
+        return $this->dataTableJson($request, $recordsTotal, $recordsFiltered, $viewData);
     }
 
     public function deleteProduct(Request $request){
@@ -369,11 +322,7 @@ class ProductController extends Controller
     }
 
     public function productNameAjax(Request $request) {
-        $searchColumns = [
-            'product_names.name',
-            'u1.username',
-            'u2.username',
-        ];
+        $searchColumns = ['product_names.name', 'u1.username', 'u2.username'];
 
         $sortingColumns = [
             0 => 'product_names.id',
@@ -382,73 +331,32 @@ class ProductController extends Controller
             3 => 'u2.username',
         ];
 
-        $selectColumns = [
-            'product_names.id',
-            'product_names.name',
-            'product_names.is_deleted',
-            'u1.username as created_by',
-            'u2.username as modified_by',
-        ];
-
         $recordsTotal = ProductName::where('product_names.is_deleted', 0)->count();
 
-        $query = ProductName::query();
-        $query->select($selectColumns);
-        $query->leftJoin('users as u1', 'u1.id', '=', 'product_names.created_by');
-        $query->leftJoin('users as u2', 'u2.id', '=', 'product_names.modified_by');
+        $query = ProductName::query()
+            ->select([
+                'product_names.id', 'product_names.name', 'product_names.is_deleted',
+                'u1.username as created_by', 'u2.username as modified_by',
+            ])
+            ->leftJoin('users as u1', 'u1.id', '=', 'product_names.created_by')
+            ->leftJoin('users as u2', 'u2.id', '=', 'product_names.modified_by');
 
-        if(isset($request->status_filter)){
+        if (isset($request->status_filter)) {
             $query->where('product_names.is_deleted', $request->status_filter);
         }
 
-        if (isset($request['order'][0])) {
-            $query->orderBy(
-                $sortingColumns[$request['order'][0]['column']],
-                $request['order'][0]['dir']
-            );
-        }
+        $recordsFiltered = $this->applyDataTableQuery($query, $request, $searchColumns, $sortingColumns, $recordsTotal);
 
-        if (!empty($request['search']['value'])) {
-            $search = $request['search']['value'];
-            $query->where(function ($q) use ($search, $searchColumns) {
-                foreach ($searchColumns as $i => $column) {
-                    $i === 0 ? $q->where($column, 'like', "%$search%")
-                            : $q->orWhere($column, 'like', "%$search%");
-                }
-            });
-        }
+        $viewData = $query->get()->map(function ($item) {
+            return [
+                'action'      => view('admin.partials.datatable.product-name-actions', ['item' => $item])->render(),
+                'name'        => $item->name,
+                'created_by'  => $item->created_by,
+                'modified_by' => $item->modified_by,
+            ];
+        })->values()->all();
 
-        $recordsFiltered = $query->count();
-        $query->skip($request->start)->take($request->length != -1 ? $request->length : $recordsTotal);
-        $data = $query->get();
-
-        $viewData = [];
-        foreach ($data as $item) {
-            $row = [];
-
-            $uiAction = '<ul class="list-inline font-size-20 contact-links mb-0">';
-                if($item->is_deleted == 0){
-                    $uiAction .= '<li class="list-inline-item px-2 pos-middle"><a href="javascript:void(0);" onclick="productNameDelete(' . $item->id . ')"><i class="fe fe-trash"></i></a></li>';
-                }else{
-                    $uiAction .= '<li class="list-inline-item px-2 pos-middle"><a href="javascript:void(0);" onclick="productNameRestore(' . $item->id . ')"><i class="fe fe-rotate-ccw"></i></a></li>';
-                }
-                $uiAction .= '<li class="list-inline-item px-2 pos-middle"><a href="javascript:void(0);" onclick="productNameEdit(' . $item->id . ')"><i class="fe fe-edit"></i></a></li>';
-            $uiAction .= '</ul>';
-
-            $row['action'] = $uiAction;
-            $row['name'] = $item->name;
-            $row['created_by'] = $item->created_by;
-            $row['modified_by'] = $item->modified_by;
-
-            $viewData[] = $row;
-        }
-
-        return response()->json([
-            'draw' => intval($request->draw),
-            'recordsTotal' => $recordsTotal,
-            'recordsFiltered' => $recordsFiltered,
-            'data' => $viewData,
-        ]);
+        return $this->dataTableJson($request, $recordsTotal, $recordsFiltered, $viewData);
     }
 
     public function deleteProductName(Request $request){
@@ -505,7 +413,7 @@ class ProductController extends Controller
         $product = Product::findOrFail($request->product_id);
         $field = $request->image_field;
 
-        if (!in_array($field, ['default_img', 'img_1', 'img_2', 'img_3', 'img_4', 'img_5', 'img_6'])) {
+        if (!in_array($field, ['default_img', 'img_1', 'img_2', 'img_3', 'img_4', 'img_5', 'img_6', 'img_7', 'img_8', 'img_9', 'img_10'])) {
             return response()->json(['success' => false, 'message' => 'Invalid image field.']);
         }
 

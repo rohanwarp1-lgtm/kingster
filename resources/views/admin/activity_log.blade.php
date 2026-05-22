@@ -14,10 +14,10 @@
                         <li class="breadcrumb-item active">Activity Log</li>
                     </ul>
                 </div>
-                <div class="col-auto">
-                    <form method="GET" class="d-flex gap-2">
-                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Search..." value="{{ request('search') }}" style="width:200px;">
-                        <select name="type" class="form-select form-select-sm" style="width:140px;">
+                <div class="col-12 col-md-auto mt-2 mt-md-0">
+                    <form method="GET" class="d-flex flex-wrap gap-2">
+                        <input type="text" name="search" class="form-control form-control-sm flex-grow-1" placeholder="Search..." value="{{ request('search') }}" style="min-width:140px;">
+                        <select name="type" class="form-select form-select-sm" style="min-width:110px;max-width:150px;">
                             <option value="">All Types</option>
                             <option value="created" {{ request('type') == 'created' ? 'selected' : '' }}>Created</option>
                             <option value="updated" {{ request('type') == 'updated' ? 'selected' : '' }}>Updated</option>

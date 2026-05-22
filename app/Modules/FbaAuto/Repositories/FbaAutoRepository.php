@@ -21,7 +21,7 @@ class FbaAutoRepository implements FbaAutoRepositoryInterface
     {
         $query = $this->model->with(['generator', 'updater'])
             ->filter($filters)
-            ->orderBy('created_at', 'desc');
+            ->orderBy('shipment_date', 'desc');
 
         if (isset($filters['paginate']) && $filters['paginate']) {
             return $query->paginate($filters['paginate'] ?? 10);
