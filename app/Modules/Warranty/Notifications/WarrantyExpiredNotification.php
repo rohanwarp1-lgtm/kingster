@@ -6,12 +6,9 @@ use App\Models\MailTemplate;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class WarrantySubmittedNotification extends Notification
+class WarrantyExpiredNotification extends Notification
 {
-    public function __construct(
-        private $warranty,
-        private ?string $reason = null
-    ) {}
+    public function __construct(private $warranty, private ?string $reason = null) {}
 
     public function via(object $notifiable): array
     {
@@ -20,7 +17,7 @@ class WarrantySubmittedNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $template = MailTemplate::getTemplate('warranty_registration');
+        $template = MailTemplate::getTemplate('warranty_expired');
 
         if ($template) {
             ['subject' => $subject, 'body' => $body] = $template->render([
@@ -32,19 +29,19 @@ class WarrantySubmittedNotification extends Notification
                 'purchase_date' => optional($this->warranty->purchase_date)->format('d M Y') ?? '',
                 'expiry_date'   => optional($this->warranty->expiry_date)->format('d M Y') ?? '',
                 'warranty_type' => ucfirst($this->warranty->warranty_type ?? 'standard'),
+                'reason'        => $this->reason ?? '',
             ]);
         } else {
-            $subject = 'Warranty Registration Received – ' . $this->warranty->ticket_no;
-            $body    = '<p>Dear <strong>' . e($this->warranty->customer_name) . '</strong>,</p>'
-                     . '<p>We have received your warranty registration request. Our team will review and activate it shortly.</p>';
+            $subject = 'Your Warranty Has Expired – ' . $this->warranty->ticket_no;
+            $body    = '<p>Dear <strong>' . e($this->warranty->customer_name) . '</strong>, your warranty has expired.</p>';
         }
 
-        return (new MailMessage)
-            ->subject($subject)
-            ->view('emails.warranty.registration', [
-                'subject'  => $subject,
-                'body'     => $body,
-                'warranty' => $this->warranty,
-            ]);
+        return (new MailMessage)->subject($subject)->view('emails.warranty.status-update', [
+            'subject'     => $subject,
+            'body'        => $body,
+            'warranty'    => $this->warranty,
+            'status'      => 'expired',
+            'headerTitle' => 'Warranty Expired',
+        ]);
     }
 }

@@ -2,51 +2,46 @@
 
 namespace App\Modules\Warranty\Notifications;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Models\MailTemplate;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class WarrantyRejectedNotification extends Notification implements ShouldQueue
+class WarrantyRejectedNotification extends Notification
 {
-    use Queueable;
-
-    public function __construct(
-        private $warranty,
-        private ?string $reason = null
-    ) {}
+    public function __construct(private $warranty, private ?string $reason = null) {}
 
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return ['mail'];
     }
 
     public function toMail(object $notifiable): MailMessage
     {
-        $mail = (new MailMessage)
-            ->subject('Warranty Registration Update - ' . $this->warranty->ticket_no)
-            ->greeting('Hello ' . $this->warranty->customer_name . '!')
-            ->line('Unfortunately, your warranty registration could not be approved at this time.')
-            ->line('Ticket Number: ' . $this->warranty->ticket_no)
-            ->line('Product: ' . $this->warranty->product_name);
+        $template = MailTemplate::getTemplate('warranty_rejected');
 
-        if ($this->reason) {
-            $mail->line('Reason: ' . $this->reason);
+        if ($template) {
+            ['subject' => $subject, 'body' => $body] = $template->render([
+                'customer_name' => $this->warranty->customer_name,
+                'ticket_no'     => $this->warranty->ticket_no,
+                'product_name'  => $this->warranty->product_name,
+                'model'         => $this->warranty->model ?? '',
+                'serial_number' => $this->warranty->serial_number ?? '',
+                'purchase_date' => optional($this->warranty->purchase_date)->format('d M Y') ?? '',
+                'expiry_date'   => optional($this->warranty->expiry_date)->format('d M Y') ?? '',
+                'warranty_type' => ucfirst($this->warranty->warranty_type ?? 'standard'),
+                'reason'        => $this->reason ?? 'No reason provided',
+            ]);
+        } else {
+            $subject = 'Update on Your Warranty – ' . $this->warranty->ticket_no;
+            $body    = '<p>Dear <strong>' . e($this->warranty->customer_name) . '</strong>, unfortunately your warranty was not approved.</p>';
         }
 
-        $mail->line('If you believe this is an error, please contact our support team.')
-             ->action('Contact Support', url('/contact-us'));
-
-        return $mail;
-    }
-
-    public function toArray(object $notifiable): array
-    {
-        return [
-            'ticket_no' => $this->warranty->ticket_no,
-            'customer_name' => $this->warranty->customer_name,
-            'status' => 'rejected',
-            'reason' => $this->reason,
-        ];
+        return (new MailMessage)->subject($subject)->view('emails.warranty.status-update', [
+            'subject'     => $subject,
+            'body'        => $body,
+            'warranty'    => $this->warranty,
+            'status'      => 'rejected',
+            'headerTitle' => 'Warranty Not Approved',
+        ]);
     }
 }

@@ -47,15 +47,20 @@ class WarrantyRegistration extends Model
     protected static function booted()
     {
         static::creating(function ($warranty) {
-            $warranty->ticket_no = 'WARR-' . strtoupper(uniqid());
-            
+            $warranty->ticket_no = 'WARR-PENDING';
+
             if (!$warranty->expiry_date && $warranty->purchase_date) {
                 $warranty->expiry_date = $warranty->purchase_date->copy()->addYear();
             }
-            
             if (!$warranty->warranty_type) {
                 $warranty->warranty_type = 'standard';
             }
+        });
+
+        static::created(function ($warranty) {
+            $warranty->updateQuietly([
+                'ticket_no' => 'WARR-' . str_pad($warranty->id, 5, '0', STR_PAD_LEFT),
+            ]);
         });
     }
 

@@ -220,21 +220,58 @@ class WarrantyService
         return "storage/{$path}/{$filename}";
     }
 
+    public function changeStatus(int $id, string $status, ?string $notes = null): bool
+    {
+        return DB::transaction(function () use ($id, $status, $notes) {
+            $warranty = $this->repository->find($id);
+
+            if (!$warranty) {
+                throw new Exception('Warranty not found');
+            }
+
+            $data = ['status' => $status, 'approval_notes' => $notes];
+            if ($status === 'approved') {
+                $data['approved_by'] = auth()->id();
+            }
+
+            $updated = $this->repository->update($id, $data);
+
+            if ($updated) {
+                WarrantyApproval::create([
+                    'warranty_id' => $warranty->id,
+                    'approver_id' => auth()->id(),
+                    'action'      => $status,
+                    'notes'       => $notes ?? 'Status changed to ' . $status,
+                    'ip_address'  => request()->ip(),
+                ]);
+
+                activity()->performedOn($warranty)->causedBy(auth()->user())
+                    ->log('Warranty status changed to ' . $status);
+
+                if ($warranty->email && in_array($status, ['approved', 'rejected', 'expired'])) {
+                    $this->notifyCustomer($warranty->fresh(), $status, $notes);
+                }
+            }
+
+            return $updated;
+        });
+    }
+
     protected function notifyCustomer(WarrantyRegistration $warranty, string $event, ?string $reason = null): void
     {
         try {
             $notificationClass = match($event) {
                 'registration_submitted' => \App\Modules\Warranty\Notifications\WarrantySubmittedNotification::class,
-                'approved' => \App\Modules\Warranty\Notifications\WarrantyApprovedNotification::class,
-                'rejected' => \App\Modules\Warranty\Notifications\WarrantyRejectedNotification::class,
-                default => null,
+                'approved'               => \App\Modules\Warranty\Notifications\WarrantyApprovedNotification::class,
+                'rejected'               => \App\Modules\Warranty\Notifications\WarrantyRejectedNotification::class,
+                'expired'                => \App\Modules\Warranty\Notifications\WarrantyExpiredNotification::class,
+                default                  => null,
             };
 
             if ($notificationClass) {
                 $warranty->notify(new $notificationClass($warranty, $reason));
             }
         } catch (Exception $e) {
-            // Log but don't fail the transaction
             \Log::error('Failed to send warranty notification: ' . $e->getMessage());
         }
     }

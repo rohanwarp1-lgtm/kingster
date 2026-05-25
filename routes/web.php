@@ -74,7 +74,10 @@ Route::get('contact-us', function () {
 
 
 // Warranty
-Route::get('warranty-application-form', function () { return view('warranty-apply'); })->name('warranty.apply.view');
+Route::get('warranty-application-form', function () {
+    $generalSettings = \App\Models\GeneralSetting::first();
+    return view('warranty-apply', compact('generalSettings'));
+})->name('warranty.apply.view');
 Route::get('warranty-status-lookup', function () { return view('warranty-check'); })->name('warranty.check.view');
 Route::get('replacement-policy', function () {
     $generalSettings = \App\Models\GeneralSetting::first();
@@ -168,6 +171,10 @@ Route::middleware(['auth', \App\Http\Middleware\AutoMigrate::class])->prefix('ad
         Route::delete('warranty/delete/{id}', [ModuleController::class, 'warrantyDelete'])->name('admin.warranty.destroy');
         Route::get('warranty/ajax', [ModuleController::class, 'warrantyAjax'])->name('admin.warranty.ajax');
         Route::get('warranty/stats', [ModuleController::class, 'warrantyStats'])->name('admin.warranty.stats');
+        Route::post('warranty/change-status/{id}', [ModuleController::class, 'warrantyChangeStatus'])->name('admin.warranty.change-status');
+        Route::get('warranty/mail-template', [ModuleController::class, 'warrantyMailTemplate'])->name('admin.warranty.mail-template.get');
+        Route::post('warranty/mail-template/save', [ModuleController::class, 'warrantyMailTemplateSave'])->name('admin.warranty.mail-template.save');
+        Route::post('warranty/mail-template/send-test', [ModuleController::class, 'warrantyMailTemplateSendTest'])->name('admin.warranty.mail-template.send-test');
 
         // Module Routes - RMA
         Route::get('rma', [ModuleController::class, 'rmaIndex'])->name('admin.rma.index');

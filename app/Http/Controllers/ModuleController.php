@@ -22,7 +22,10 @@ use App\Modules\Warranty\Models\WarrantyRegistration;
 use App\Modules\Rma\Models\RmaTicket;
 use App\Modules\ReturnReport\Models\ReturnReport;
 use App\Models\ProductName;
+use App\Models\MailTemplate;
+use App\Modules\Warranty\Notifications\WarrantySubmittedNotification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Carbon;
 use Exception;
 
@@ -476,9 +479,17 @@ class ModuleController extends Controller
             ->addColumn('status', fn ($row) => $row->status_badge)
             ->addColumn('action', fn ($row) =>
                 '<a href="/admin/warranty/show/'.$row->id.'" class="btn btn-sm btn-info me-1 text-white"><i class="fe fe-eye"></i></a>'.
-                '<button class="btn btn-sm btn-success approve-btn me-1" data-id="'.$row->id.'"><i class="fe fe-check"></i></button>'.
-                '<button class="btn btn-sm btn-warning reject-btn me-1" data-id="'.$row->id.'"><i class="fe fe-x"></i></button>'.
-                '<button class="btn btn-sm btn-danger delete-btn" data-id="'.$row->id.'"><i class="fe fe-trash-2"></i></button>'
+                '<div class="dropdown d-inline-block me-1">'.
+                  '<button class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" title="Change Status"><i class="fe fe-sliders"></i></button>'.
+                  '<ul class="dropdown-menu dropdown-menu-end shadow-sm" style="min-width:140px;">'.
+                    '<li><h6 class="dropdown-header" style="font-size:11px;">Change Status</h6></li>'.
+                    '<li><a class="dropdown-item status-change-btn" href="#" data-id="'.$row->id.'" data-status="pending"><span class="badge bg-warning me-2">●</span>Pending</a></li>'.
+                    '<li><a class="dropdown-item status-change-btn" href="#" data-id="'.$row->id.'" data-status="approved"><span class="badge bg-success me-2">●</span>Active</a></li>'.
+                    '<li><a class="dropdown-item status-change-btn" href="#" data-id="'.$row->id.'" data-status="expired"><span class="badge bg-secondary me-2">●</span>Expired</a></li>'.
+                    '<li><a class="dropdown-item status-change-btn" href="#" data-id="'.$row->id.'" data-status="rejected"><span class="badge bg-danger me-2">●</span>Rejected</a></li>'.
+                  '</ul>'.
+                '</div>'.
+                '<button class="btn btn-sm btn-danger delete-btn" data-id="'.$row->id.'" title="Delete"><i class="fe fe-trash-2"></i></button>'
             )
             ->rawColumns(['status', 'action'])
             ->make(true);
@@ -489,7 +500,25 @@ class ModuleController extends Controller
         return response()->json(['success' => true, 'data' => $this->warrantyService->getDashboardStats()]);
     }
 
-    // RMA MODULE
+    public function warrantyChangeStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,approved,rejected,expired',
+            'notes'  => 'required_if:status,rejected|nullable|string|max:1000',
+        ], [
+            'notes.required_if' => 'A reason is required when rejecting a warranty.',
+        ]);
+
+        try {
+            $this->warrantyService->changeStatus($id, $request->status, $request->notes);
+            $label = ['pending' => 'Pending', 'approved' => 'Active', 'rejected' => 'Rejected', 'expired' => 'Expired'][$request->status];
+            return response()->json(['success' => true, 'message' => 'Status changed to ' . $label . ' and notification sent.']);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    // MAIL TEMPLATE – Warranty Registration
     public function rmaIndex()
     {
         $stats    = $this->rmaService->getDashboardStats();
@@ -704,5 +733,101 @@ class ModuleController extends Controller
             )
             ->rawColumns(['action'])
             ->make(true);
+    }
+
+    // MAIL TEMPLATES – All warranty types
+    public function warrantyMailTemplate(Request $request)
+    {
+        $type     = $request->get('type', 'warranty_registration');
+        $template = MailTemplate::where('type', $type)->first();
+        return response()->json(['success' => true, 'data' => $template]);
+    }
+
+    public function warrantyMailTemplateSave(Request $request)
+    {
+        $request->validate([
+            'type'    => 'required|in:warranty_registration,warranty_active,warranty_rejected,warranty_expired',
+            'subject' => 'required|string|max:255',
+            'body'    => 'required|string',
+        ]);
+
+        $names = [
+            'warranty_registration' => 'Warranty Registration Confirmation',
+            'warranty_active'       => 'Warranty Activated',
+            'warranty_rejected'     => 'Warranty Rejected',
+            'warranty_expired'      => 'Warranty Expired',
+        ];
+
+        MailTemplate::updateOrCreate(
+            ['type' => $request->type],
+            ['name' => $names[$request->type], 'subject' => $request->subject, 'body' => $request->body, 'is_active' => true]
+        );
+
+        return response()->json(['success' => true, 'message' => 'Template saved successfully']);
+    }
+
+    public function warrantyMailTemplateSendTest(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'type'  => 'required|in:warranty_registration,warranty_active,warranty_rejected,warranty_expired',
+        ]);
+
+        try {
+            $template = MailTemplate::getTemplate($request->type);
+
+            $dummyWarranty = (object) [
+                'ticket_no'         => 'WARR-TEST001',
+                'customer_name'     => 'Test Customer',
+                'product_name'      => 'Kingster Sample Product',
+                'model'             => 'KG-2024-X',
+                'serial_number'     => 'SN123456789',
+                'purchase_platform' => 'Amazon',
+                'purchase_date'     => now(),
+                'expiry_date'       => now()->addYear(),
+                'warranty_type'     => 'standard',
+                'email'             => $request->email,
+            ];
+
+            $vars = [
+                'customer_name' => 'Test Customer',
+                'ticket_no'     => 'WARR-TEST001',
+                'product_name'  => 'Kingster Sample Product',
+                'model'         => 'KG-2024-X',
+                'serial_number' => 'SN123456789',
+                'purchase_date' => now()->format('d M Y'),
+                'expiry_date'   => now()->addYear()->format('d M Y'),
+                'warranty_type' => 'Standard',
+                'reason'        => 'Documentation incomplete (test)',
+            ];
+
+            if ($template) {
+                ['subject' => $subject, 'body' => $body] = $template->render($vars);
+            } else {
+                $subject = 'Kingster – Mail Test';
+                $body    = '<p>This is a test email from the Kingster admin panel.</p>';
+            }
+
+            $statusMap = [
+                'warranty_registration' => ['view' => 'emails.warranty.registration', 'status' => null,       'title' => null],
+                'warranty_active'       => ['view' => 'emails.warranty.status-update', 'status' => 'approved', 'title' => 'Warranty Activated!'],
+                'warranty_rejected'     => ['view' => 'emails.warranty.status-update', 'status' => 'rejected', 'title' => 'Warranty Not Approved'],
+                'warranty_expired'      => ['view' => 'emails.warranty.status-update', 'status' => 'expired',  'title' => 'Warranty Expired'],
+            ];
+
+            $map      = $statusMap[$request->type];
+            $viewData = ['subject' => $subject, 'body' => $body, 'warranty' => $dummyWarranty];
+
+            if ($map['status']) {
+                $viewData['status']      = $map['status'];
+                $viewData['headerTitle'] = $map['title'];
+            }
+
+            Mail::send($map['view'], $viewData, fn ($msg) => $msg->to($request->email)->subject($subject));
+
+            return response()->json(['success' => true, 'message' => 'Test mail sent to ' . $request->email]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed: ' . $e->getMessage()], 500);
+        }
     }
 }

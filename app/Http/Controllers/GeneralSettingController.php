@@ -149,6 +149,11 @@ class GeneralSettingController extends Controller
                 'field' => 'shipping_returns_content',
                 'route' => 'shipping-returns',
             ],
+            'warranty_declaration' => [
+                'label' => 'Warranty Declaration (Application Form)',
+                'field' => 'warranty_declaration_text',
+                'route' => 'warranty.apply.view',
+            ],
         ];
     }
 

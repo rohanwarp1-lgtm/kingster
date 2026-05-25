@@ -76,14 +76,18 @@ class WarrantyController extends Controller
         }
 
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
-            'buyer_name' => ['required', 'string', 'max:255'],
-            'mobile' => ['required', 'string', 'max:20'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'purchase_source' => ['required', 'string', 'max:255'],
-            'address' => ['nullable', 'string', 'max:1000'],
-            'product_name' => ['required', 'string', 'max:255'],
-            'serial_number' => ['required', 'string', 'max:255'],
-            'purchase_date' => ['required', 'date'],
+            'buyer_name'     => ['required', 'string', 'max:255'],
+            'mobile'         => ['required', 'string', 'max:20'],
+            'email'          => ['nullable', 'email', 'max:255'],
+            'purchase_source'=> ['required', 'string', 'max:255'],
+            'address'        => ['nullable', 'string', 'max:1000'],
+            'product_name'   => ['required', 'string', 'max:255'],
+            'serial_number'  => ['required', 'string', 'max:255'],
+            'purchase_date'  => ['required', 'date'],
+            'terms_accepted' => ['required', 'in:1'],
+        ], [
+            'terms_accepted.required' => 'You must accept the warranty declaration to proceed.',
+            'terms_accepted.in'       => 'You must accept the warranty declaration to proceed.',
         ]);
 
         if ($validator->fails()) {
@@ -111,19 +115,20 @@ class WarrantyController extends Controller
         $expiryDate = $purchaseDate->copy()->addYear();
 
         Warranty::create([
-            'user_name' => $request->buyer_name,
-            'mobile_number' => $request->mobile,
-            'email' => $request->email,
+            'user_name'       => $request->buyer_name,
+            'mobile_number'   => $request->mobile,
+            'email'           => $request->email,
             'purchase_source' => $request->purchase_source,
-            'address' => $request->address,
-            'product_name' => $request->product_name,
-            'serial_number' => $serial,
-            'purchase_date' => $purchaseDate->toDateString(),
-            'expiry_date' => $expiryDate->toDateString(),
+            'address'         => $request->address,
+            'product_name'    => $request->product_name,
+            'serial_number'   => $serial,
+            'purchase_date'   => $purchaseDate->toDateString(),
+            'expiry_date'     => $expiryDate->toDateString(),
             'warranty_status' => 'Pending',
-            'is_deleted' => 0,
-            'created_by' => null,
-            'modified_by' => null,
+            'terms_accepted'  => (int) $request->terms_accepted,
+            'is_deleted'      => 0,
+            'created_by'      => null,
+            'modified_by'     => null,
         ]);
 
         activity('warranty')->causedBy(auth()->user() ?? null)->withProperties(['serial_number' => $serial, 'product' => $request->product_name])->log('created');

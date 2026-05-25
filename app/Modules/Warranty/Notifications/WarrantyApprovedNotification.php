@@ -2,44 +2,46 @@
 
 namespace App\Modules\Warranty\Notifications;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Models\MailTemplate;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class WarrantyApprovedNotification extends Notification implements ShouldQueue
+class WarrantyApprovedNotification extends Notification
 {
-    use Queueable;
-
-    public function __construct(
-        private $warranty
-    ) {}
+    public function __construct(private $warranty, private ?string $reason = null) {}
 
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return ['mail'];
     }
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
-            ->subject('Warranty Approved - ' . $this->warranty->ticket_no)
-            ->greeting('Hello ' . $this->warranty->customer_name . '!')
-            ->line('Great news! Your warranty registration has been approved.')
-            ->line('Ticket Number: ' . $this->warranty->ticket_no)
-            ->line('Product: ' . $this->warranty->product_name)
-            ->line('Warranty Valid Until: ' . $this->warranty->expiry_date->format('d M Y'))
-            ->action('View Details', url('/warranty-status-lookup'))
-            ->line('Please keep this information for your records.');
-    }
+        $template = MailTemplate::getTemplate('warranty_active');
 
-    public function toArray(object $notifiable): array
-    {
-        return [
-            'ticket_no' => $this->warranty->ticket_no,
-            'customer_name' => $this->warranty->customer_name,
-            'status' => 'approved',
-            'expiry_date' => $this->warranty->expiry_date->toDateString(),
-        ];
+        if ($template) {
+            ['subject' => $subject, 'body' => $body] = $template->render([
+                'customer_name' => $this->warranty->customer_name,
+                'ticket_no'     => $this->warranty->ticket_no,
+                'product_name'  => $this->warranty->product_name,
+                'model'         => $this->warranty->model ?? '',
+                'serial_number' => $this->warranty->serial_number ?? '',
+                'purchase_date' => optional($this->warranty->purchase_date)->format('d M Y') ?? '',
+                'expiry_date'   => optional($this->warranty->expiry_date)->format('d M Y') ?? '',
+                'warranty_type' => ucfirst($this->warranty->warranty_type ?? 'standard'),
+                'reason'        => $this->reason ?? '',
+            ]);
+        } else {
+            $subject = 'Your Warranty is Now Active – ' . $this->warranty->ticket_no;
+            $body    = '<p>Dear <strong>' . e($this->warranty->customer_name) . '</strong>, your warranty has been approved.</p>';
+        }
+
+        return (new MailMessage)->subject($subject)->view('emails.warranty.status-update', [
+            'subject'     => $subject,
+            'body'        => $body,
+            'warranty'    => $this->warranty,
+            'status'      => 'approved',
+            'headerTitle' => 'Warranty Activated!',
+        ]);
     }
 }
