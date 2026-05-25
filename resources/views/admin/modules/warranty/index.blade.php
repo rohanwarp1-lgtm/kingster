@@ -23,11 +23,11 @@
             </div>
         </div>
 
-        <div class="row g-2 stat-tiles">
+        <div class="row g-2 stat-tiles mb-3">
             <div class="col-xl-3 col-sm-6 col-12 d-flex">
-                <div class="card bg-comman w-100">
+                <div class="card stat-card stat-purple w-100">
                     <div class="card-body">
-                        <div class="db-widgets d-flex justify-content-between align-items-center">
+                        <div class="db-widgets">
                             <div class="db-info">
                                 <h6>Total Warranties</h6>
                                 <h3>{{ $stats['total'] ?? 0 }}</h3>
@@ -40,9 +40,9 @@
                 </div>
             </div>
             <div class="col-xl-3 col-sm-6 col-12 d-flex">
-                <div class="card bg-comman w-100">
+                <div class="card stat-card stat-orange w-100">
                     <div class="card-body">
-                        <div class="db-widgets d-flex justify-content-between align-items-center">
+                        <div class="db-widgets">
                             <div class="db-info">
                                 <h6>Pending</h6>
                                 <h3>{{ $stats['pending'] ?? 0 }}</h3>
@@ -55,9 +55,9 @@
                 </div>
             </div>
             <div class="col-xl-3 col-sm-6 col-12 d-flex">
-                <div class="card bg-comman w-100">
+                <div class="card stat-card stat-green w-100">
                     <div class="card-body">
-                        <div class="db-widgets d-flex justify-content-between align-items-center">
+                        <div class="db-widgets">
                             <div class="db-info">
                                 <h6>Approved</h6>
                                 <h3>{{ $stats['approved'] ?? 0 }}</h3>
@@ -70,9 +70,9 @@
                 </div>
             </div>
             <div class="col-xl-3 col-sm-6 col-12 d-flex">
-                <div class="card bg-comman w-100">
+                <div class="card stat-card stat-blue w-100">
                     <div class="card-body">
-                        <div class="db-widgets d-flex justify-content-between align-items-center">
+                        <div class="db-widgets">
                             <div class="db-info">
                                 <h6>Expiring Soon</h6>
                                 <h3>{{ $stats['expiring_soon'] ?? 0 }}</h3>
@@ -81,6 +81,35 @@
                                 <i class="fe fe-calendar"></i>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body py-2">
+                <div class="row g-2 align-items-end">
+                    <div class="col-auto">
+                        <label class="form-label mb-1 small fw-semibold">Month</label>
+                        <select id="filter-month" class="form-select form-select-sm" style="min-width:150px">
+                            <option value="">All Months</option>
+                            @foreach($months as $val => $label)
+                                <option value="{{ $val }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <label class="form-label mb-1 small fw-semibold">Status</label>
+                        <select id="filter-status" class="form-select form-select-sm" style="min-width:140px">
+                            <option value="">All Statuses</option>
+                            @foreach($statuses as $s)
+                                <option value="{{ $s }}">{{ ucwords(str_replace('_', ' ', $s)) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-auto d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-primary" id="btn-apply-filter"><i class="fe fe-filter"></i> Filter</button>
+                        <button type="button" class="btn btn-sm btn-secondary" id="btn-clear-filter"><i class="fe fe-x"></i> Clear</button>
                     </div>
                 </div>
             </div>
@@ -128,10 +157,16 @@ function openCreateModal() {
 }
 
 $(function () {
-    $('#warranty-table').DataTable({
+    var warrantyTable = $('#warranty-table').DataTable({
         processing: true,
         serverSide: true,
-        ajax: '{{ route('admin.warranty.ajax') }}',
+        ajax: {
+            url: '{{ route('admin.warranty.ajax') }}',
+            data: function (d) {
+                d.month  = $('#filter-month').val();
+                d.status = $('#filter-status').val();
+            }
+        },
         columns: [
             {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
             {data: 'ticket_no', name: 'ticket_no'},
@@ -148,6 +183,14 @@ $(function () {
             {data: 'action', name: 'action', orderable: false, searchable: false},
         ],
         order: [[1, 'desc']]
+    });
+
+    $('#filter-month, #filter-status').on('change', function () { warrantyTable.ajax.reload(); });
+    $('#btn-apply-filter').on('click', function () { warrantyTable.ajax.reload(); });
+    $('#btn-clear-filter').on('click', function () {
+        $('#filter-month').val('');
+        $('#filter-status').val('');
+        warrantyTable.ajax.reload();
     });
 });
 
@@ -190,7 +233,7 @@ $('#action-form').on('submit', function(e) {
         success: function(response) {
             toastr.success(response.message);
             $('#actionModal').modal('hide');
-            $('#warranty-table').DataTable().ajax.reload();
+            warrantyTable.ajax.reload();
         },
         error: function() {
             toastr.error('Error occurred');
@@ -214,7 +257,7 @@ $('#create-form').on('submit', function(e) {
                 toastr.success(response.message);
                 $('#createModal').modal('hide');
                 $('#create-form')[0].reset();
-                $('#warranty-table').DataTable().ajax.reload();
+                warrantyTable.ajax.reload();
             }
         },
         error: function() {
@@ -241,7 +284,7 @@ $(document).on('click', '.delete-btn', function() {
                 success: function(response) {
                     if (response.success) {
                         toastr.success('Deleted successfully');
-                        $('#warranty-table').DataTable().ajax.reload();
+                        warrantyTable.ajax.reload();
                     } else {
                         toastr.error(response.message);
                     }

@@ -38,6 +38,9 @@ class UpdateFbaAutoRequest extends FormRequest
             'items'                => ['required', 'array', 'min:1'],
             'items.*.id'           => ['nullable', 'integer'],
             'items.*.product_name' => ['required', 'string', 'max:255'],
+            'items.*.asin'         => ['nullable', 'string', 'max:50'],
+            'items.*.sku'          => ['nullable', 'string', 'max:100'],
+            'items.*.sku_label'    => ['nullable', 'string', 'max:100'],
             'items.*.qty'          => ['required', 'integer', 'min:1'],
             'items.*.qty_price'    => ['required', 'numeric', 'min:0', 'max:1000000000'],
         ];

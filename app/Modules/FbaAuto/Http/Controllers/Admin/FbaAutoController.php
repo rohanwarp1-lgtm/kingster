@@ -25,8 +25,9 @@ class FbaAutoController extends Controller
         $warehouses = $this->service->getWarehouses();
         $states = $this->service->getStates();
         $productNames = $this->service->getProductNames();
+        $stats = $this->service->getDashboardStats();
 
-        return $dataTable->render('admin.modules.fba-auto.index', compact('warehouses', 'states', 'productNames'));
+        return $dataTable->render('admin.modules.fba-auto.index', compact('warehouses', 'states', 'productNames', 'stats'));
     }
 
     public function create()

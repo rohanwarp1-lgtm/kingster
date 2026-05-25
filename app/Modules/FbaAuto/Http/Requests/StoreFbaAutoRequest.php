@@ -37,6 +37,9 @@ class StoreFbaAutoRequest extends FormRequest
             'warehouse_name'           => ['required', 'string', 'max:255'],
             'items'                    => ['required', 'array', 'min:1'],
             'items.*.product_name'     => ['required', 'string', 'max:255'],
+            'items.*.asin'             => ['nullable', 'string', 'max:50'],
+            'items.*.sku'              => ['nullable', 'string', 'max:100'],
+            'items.*.sku_label'        => ['nullable', 'string', 'max:100'],
             'items.*.qty'              => ['required', 'integer', 'min:1'],
             'items.*.qty_price'        => ['required', 'numeric', 'min:0', 'max:1000000000'],
         ];

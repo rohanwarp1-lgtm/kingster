@@ -49,11 +49,14 @@
                         <table class="table table-bordered table-sm align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th style="width:40px">#</th>
+                                    <th style="width:36px">#</th>
                                     <th>Product</th>
-                                    <th style="width:110px">Qty</th>
-                                    <th style="width:160px">Total Amount (₹)</th>
-                                    <th style="width:46px"></th>
+                                    <th style="width:110px">ASIN</th>
+                                    <th style="width:120px">SKU</th>
+                                    <th style="width:120px">SKU Label</th>
+                                    <th style="width:90px">Qty</th>
+                                    <th style="width:140px">Amount (₹)</th>
+                                    <th style="width:44px"></th>
                                 </tr>
                             </thead>
                             <tbody id="product-rows"></tbody>

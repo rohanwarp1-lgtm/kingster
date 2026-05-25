@@ -19,7 +19,9 @@ class WarrantyController extends Controller
 
     public function index(WarrantyDataTable $dataTable)
     {
-        return $dataTable->render('admin.modules.warranty.index');
+        $stats = $this->service->getDashboardStats();
+
+        return $dataTable->render('admin.modules.warranty.index', compact('stats'));
     }
 
     public function create()

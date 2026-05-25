@@ -79,11 +79,14 @@
             <table class="table table-bordered table-sm align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th style="width:40px">#</th>
+                        <th style="width:36px">#</th>
                         <th>Product</th>
-                        <th style="width:110px">Qty</th>
-                        <th style="width:160px">Total Amount (₹)</th>
-                        <th style="width:46px"></th>
+                        <th style="width:110px">ASIN</th>
+                        <th style="width:120px">SKU</th>
+                        <th style="width:120px">SKU Label</th>
+                        <th style="width:90px">Qty</th>
+                        <th style="width:140px">Amount (₹)</th>
+                        <th style="width:44px"></th>
                     </tr>
                 </thead>
                 <tbody id="edit-product-rows">
@@ -96,6 +99,9 @@
                                 <option value="{{ $item->product_name }}" selected>{{ $item->product_name }}</option>
                             </select>
                         </td>
+                        <td><input type="text" name="items[{{ $idx }}][asin]" class="form-control form-control-sm" value="{{ $item->asin }}" placeholder="ASIN" maxlength="50"></td>
+                        <td><input type="text" name="items[{{ $idx }}][sku]" class="form-control form-control-sm" value="{{ $item->sku }}" placeholder="SKU" maxlength="100"></td>
+                        <td><input type="text" name="items[{{ $idx }}][sku_label]" class="form-control form-control-sm" value="{{ $item->sku_label }}" placeholder="SKU Label" maxlength="100"></td>
                         <td>
                             <input type="number" name="items[{{ $idx }}][qty]" class="form-control form-control-sm"
                                    min="1" value="{{ $item->qty }}" required>

@@ -23,6 +23,7 @@ use App\Modules\Rma\Models\RmaTicket;
 use App\Modules\ReturnReport\Models\ReturnReport;
 use App\Models\ProductName;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 use Exception;
 
 class ModuleController extends Controller
@@ -51,7 +52,19 @@ class ModuleController extends Controller
             ->pluck('name')
             ->toArray();
 
-        return view('admin.modules.fba-auto.index', compact('stats', 'states', 'warehouses', 'productNames'));
+        $months = FbaAuto::query()
+            ->selectRaw('YEAR(shipment_date) as yr, MONTH(shipment_date) as mn')
+            ->whereNotNull('shipment_date')
+            ->groupBy('yr', 'mn')
+            ->orderByDesc('yr')
+            ->orderByDesc('mn')
+            ->get()
+            ->mapWithKeys(fn ($row) => [
+                $row->yr . '-' . str_pad($row->mn, 2, '0', STR_PAD_LEFT)
+                    => Carbon::createFromDate($row->yr, $row->mn, 1)->format('F Y'),
+            ]);
+
+        return view('admin.modules.fba-auto.index', compact('stats', 'states', 'warehouses', 'productNames', 'months'));
     }
 
     public function fbaAutoCreate()
@@ -137,29 +150,49 @@ class ModuleController extends Controller
 
     public function fbaAutoAjax(Request $request)
     {
+        $month  = $request->get('month');
+        $state  = $request->get('state');
+        $status = $request->get('status_filter');
+        $date   = $request->get('date_filter'); // 'today', 'yesterday', ''
+
         $shipments = FbaAuto::query()
             ->with(['generator', 'updater'])
+            ->when($month, function ($q) use ($month) {
+                [$yr, $mn] = explode('-', $month);
+                $q->whereYear('shipment_date', $yr)->whereMonth('shipment_date', $mn);
+            })
+            ->when($state, fn ($q) => $q->where('state', $state))
+            ->when($status, fn ($q) => $q->where('status', $status))
+            ->when($date === 'today', fn ($q) => $q->whereDate('created_at', today()))
+            ->when($date === 'yesterday', fn ($q) => $q->whereDate('created_at', today()->subDay()))
             ->orderByDesc('shipment_date')
+            ->orderByDesc('created_at')
             ->get()
             ->groupBy('shipment_id')
             ->map(function ($items) {
-                $first = $items->first();
+                $first        = $items->first();
                 $latestUpdate = $items->sortByDesc('updated_at')->first();
 
                 return (object) [
-                    'id' => $first->id,
-                    'shipment_id' => $first->shipment_id,
-                    'shipment_date' => $first->shipment_date,
-                    'product_names' => $items->pluck('product_name')->values()->all(),
-                    'qty_values' => $items->pluck('qty')->values()->all(),
-                    'qty_price_values' => $items->pluck('qty_price')->values()->all(),
-                    'state' => $first->state,
-                    'warehouse_name' => $first->warehouse_name,
+                    'id'                => $first->id,
+                    'shipment_id'       => $first->shipment_id,
+                    'shipment_date'     => $first->shipment_date,
+                    'shipment_date_sort'=> $first->created_at?->format('Y-m-d H:i:s') ?? ($first->shipment_date?->format('Y-m-d') ?? ''),
+                    'product_names'     => $items->pluck('product_name')->values()->all(),
+                    'asin_values'       => $items->pluck('asin')->values()->all(),
+                    'sku_values'        => $items->pluck('sku')->values()->all(),
+                    'sku_label_values'  => $items->pluck('sku_label')->values()->all(),
+                    'qty_values'        => $items->pluck('qty')->values()->all(),
+                    'qty_price_values'  => $items->pluck('qty_price')->values()->all(),
+                    'qty_total'         => $items->sum('qty'),
+                    'amount_total'      => $items->sum('qty_price'),
+                    'state'             => $first->state,
+                    'warehouse_name'    => $first->warehouse_name,
                     'generated_by_name' => $first->generator->username ?? $first->generator->name ?? 'System',
-                    'generated_at' => $items->sortBy('created_at')->first()?->created_at,
-                    'updated_by_name' => $latestUpdate?->updater ? ($latestUpdate->updater->username ?? $latestUpdate->updater->name ?? 'System') : null,
-                    'updated_at' => $latestUpdate?->updated_by ? $latestUpdate->updated_at : null,
-                    'status' => $first->status,
+                    'generated_at'      => $items->sortBy('created_at')->first()?->created_at,
+                    'updated_by_name'   => $latestUpdate?->updater ? ($latestUpdate->updater->username ?? $latestUpdate->updater->name ?? 'System') : null,
+                    'updated_at'        => $latestUpdate?->updated_by ? $latestUpdate->updated_at : null,
+                    'status'            => $first->status,
                 ];
             })
             ->values();
@@ -167,16 +200,16 @@ class ModuleController extends Controller
         return datatables()
             ->collection($shipments)
             ->addIndexColumn()
-            ->addColumn('shipment_id', fn ($row) => '<strong>'.e($row->shipment_id).'</strong>')
+            ->addColumn('shipment_id', fn ($row) =>
+                '<strong>'.e($row->shipment_id).'</strong>'.
+                '<div class="fba-sub-text"><i class="fe fe-user me-1"></i>'.e($row->generated_by_name).
+                ' &nbsp;<i class="fe fe-clock me-1"></i>'.optional($row->generated_at)->format('d-M-Y H:i').'</div>'
+            )
             ->addColumn('shipment_date', fn ($row) => optional($row->shipment_date)->format('d-M-Y'))
-            ->addColumn('product_name', fn ($row) => $this->formatFbaLines($row->product_names))
+            ->addColumn('product_name', fn ($row) => $this->formatFbaProductLines($row))
             ->addColumn('qty', fn ($row) => $this->formatFbaLines(array_map(fn ($qty) => number_format((int) $qty), $row->qty_values)))
             ->addColumn('warehouse_name', fn ($row) => '<span class="badge bg-primary">'.e($row->warehouse_name).'</span>')
             ->addColumn('qty_price', fn ($row) => $this->formatFbaLines(array_map(fn ($price) => '₹' . number_format((float) $price, 2), $row->qty_price_values)))
-            ->addColumn('generated_by', fn ($row) => e($row->generated_by_name))
-            ->addColumn('generated_at', fn ($row) => optional($row->generated_at)->format('d-M-Y H:i'))
-            ->addColumn('updated_by', fn ($row) => $row->updated_by_name ? e($row->updated_by_name) : '-')
-            ->addColumn('updated_at', fn ($row) => $row->updated_at ? optional($row->updated_at)->format('d-M-Y H:i') : '-')
             ->addColumn('status', fn ($row) => $this->fbaStatusBadge($row->status))
             ->addColumn('action', fn ($row) =>
                 '<a href="'.route('admin.fba-auto.show', $row->id).'" class="btn btn-sm btn-info me-1 text-white" title="View history"><i class="fe fe-eye"></i></a>'.
@@ -185,6 +218,142 @@ class ModuleController extends Controller
             )
             ->rawColumns(['shipment_id', 'product_name', 'qty', 'warehouse_name', 'qty_price', 'status', 'action'])
             ->make(true);
+    }
+
+    public function fbaAutoFilterSummary(Request $request)
+    {
+        $month  = $request->get('month');
+        $state  = $request->get('state');
+        $status = $request->get('status_filter');
+        $date   = $request->get('date_filter');
+
+        $query = FbaAuto::query()
+            ->when($month, function ($q) use ($month) {
+                [$yr, $mn] = explode('-', $month);
+                $q->whereYear('shipment_date', $yr)->whereMonth('shipment_date', $mn);
+            })
+            ->when($state, fn ($q) => $q->where('state', $state))
+            ->when($status, fn ($q) => $q->where('status', $status))
+            ->when($date === 'today', fn ($q) => $q->whereDate('created_at', today()))
+            ->when($date === 'yesterday', fn ($q) => $q->whereDate('created_at', today()->subDay()));
+
+        $totalQty    = (int) $query->sum('qty');
+        $totalAmount = (float) $query->sum('qty_price');
+
+        $byState = (clone $query)
+            ->selectRaw('state, SUM(qty) as qty, SUM(qty_price) as amount, COUNT(DISTINCT shipment_id) as shipments')
+            ->groupBy('state')
+            ->orderByDesc('amount')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'total_qty'    => $totalQty,
+            'total_amount' => $totalAmount,
+            'by_state'     => $byState,
+        ]);
+    }
+
+    public function fbaAutoExport(Request $request)
+    {
+        $month  = $request->get('month');
+        $state  = $request->get('state');
+        $status = $request->get('status_filter');
+        $date   = $request->get('date_filter');
+
+        $rows = FbaAuto::query()
+            ->when($month, function ($q) use ($month) {
+                [$yr, $mn] = explode('-', $month);
+                $q->whereYear('shipment_date', $yr)->whereMonth('shipment_date', $mn);
+            })
+            ->when($state, fn ($q) => $q->where('state', $state))
+            ->when($status, fn ($q) => $q->where('status', $status))
+            ->when($date === 'today', fn ($q) => $q->whereDate('created_at', today()))
+            ->when($date === 'yesterday', fn ($q) => $q->whereDate('created_at', today()->subDay()))
+            ->orderByDesc('shipment_date')->orderByDesc('created_at')
+            ->get();
+
+        $filename = 'fba_shipments_' . now()->format('Ymd_His') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function () use ($rows) {
+            $fp = fopen('php://output', 'w');
+            fputcsv($fp, ['Shipment ID', 'Shipment Date', 'Product', 'ASIN', 'SKU', 'SKU Label', 'Qty', 'Amount (₹)', 'State', 'Warehouse', 'Status', 'Created At']);
+            foreach ($rows as $row) {
+                fputcsv($fp, [
+                    $row->shipment_id,
+                    $row->shipment_date?->format('d-M-Y'),
+                    $row->product_name,
+                    $row->asin,
+                    $row->sku,
+                    $row->sku_label,
+                    $row->qty,
+                    $row->qty_price,
+                    $row->state,
+                    $row->warehouse_name,
+                    $row->status,
+                    $row->created_at?->format('d-M-Y H:i'),
+                ]);
+            }
+            fclose($fp);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function fbaAutoReportData(Request $request)
+    {
+        $month = $request->get('month');
+        $state = $request->get('state');
+
+        $base = FbaAuto::query()
+            ->when($month, function ($q) use ($month) {
+                [$yr, $mn] = explode('-', $month);
+                $q->whereYear('shipment_date', $yr)->whereMonth('shipment_date', $mn);
+            })
+            ->when($state, fn ($q) => $q->where('state', $state));
+
+        $byState = (clone $base)
+            ->selectRaw('state, SUM(qty) as total_qty, SUM(qty_price) as total_amount, COUNT(DISTINCT shipment_id) as shipments')
+            ->groupBy('state')
+            ->orderByDesc('total_amount')
+            ->get();
+
+        $byProduct = (clone $base)
+            ->selectRaw('product_name, SUM(qty) as total_qty, SUM(qty_price) as total_amount')
+            ->groupBy('product_name')
+            ->orderByDesc('total_amount')
+            ->get();
+
+        $overall = [
+            'total_qty'       => (int) (clone $base)->sum('qty'),
+            'total_amount'    => (float) (clone $base)->sum('qty_price'),
+            'total_shipments' => (clone $base)->distinct('shipment_id')->count('shipment_id'),
+        ];
+
+        return response()->json([
+            'success'    => true,
+            'overall'    => $overall,
+            'by_state'   => $byState,
+            'by_product' => $byProduct,
+        ]);
+    }
+
+    private function formatFbaProductLines(object $row): string
+    {
+        $lines = '';
+        foreach ($row->product_names as $i => $name) {
+            $sub = '';
+            if (!empty($row->asin_values[$i])) $sub .= '<span class="fba-tag">ASIN:'.e($row->asin_values[$i]).'</span>';
+            if (!empty($row->sku_values[$i]))  $sub .= '<span class="fba-tag">SKU:'.e($row->sku_values[$i]).'</span>';
+            if (!empty($row->sku_label_values[$i])) $sub .= '<span class="fba-tag">LBL:'.e($row->sku_label_values[$i]).'</span>';
+            $lines .= '<div class="fba-merged-line">'.e($name).($sub ? '<div class="fba-tags">'.$sub.'</div>' : '').'</div>';
+        }
+        return $lines;
     }
 
     private function formatFbaLines(array $values): string
@@ -217,8 +386,18 @@ class ModuleController extends Controller
     // WARRANTY MODULE
     public function warrantyIndex()
     {
-        $stats = $this->warrantyService->getDashboardStats();
-        return view('admin.modules.warranty.index', ['stats' => $stats]);
+        $stats    = $this->warrantyService->getDashboardStats();
+        $statuses = ['pending', 'under_review', 'approved', 'rejected', 'cancelled'];
+        $months   = WarrantyRegistration::query()
+            ->selectRaw('YEAR(created_at) as yr, MONTH(created_at) as mn')
+            ->groupBy('yr', 'mn')
+            ->orderByDesc('yr')->orderByDesc('mn')
+            ->get()
+            ->mapWithKeys(fn ($row) => [
+                $row->yr . '-' . str_pad($row->mn, 2, '0', STR_PAD_LEFT)
+                    => Carbon::createFromDate($row->yr, $row->mn, 1)->format('F Y'),
+            ]);
+        return view('admin.modules.warranty.index', compact('stats', 'statuses', 'months'));
     }
 
     public function warrantyCreate()
@@ -278,7 +457,16 @@ class ModuleController extends Controller
 
     public function warrantyAjax(Request $request)
     {
-        $query = WarrantyRegistration::query()->select('warranty_registrations.*');
+        $month  = $request->get('month');
+        $status = $request->get('status');
+
+        $query = WarrantyRegistration::query()
+            ->select('warranty_registrations.*')
+            ->when($month, function ($q) use ($month) {
+                [$yr, $mn] = explode('-', $month);
+                $q->whereYear('created_at', $yr)->whereMonth('created_at', $mn);
+            })
+            ->when($status, fn ($q) => $q->where('status', $status));
 
         return datatables()
             ->eloquent($query)
@@ -304,8 +492,18 @@ class ModuleController extends Controller
     // RMA MODULE
     public function rmaIndex()
     {
-        $stats = $this->rmaService->getDashboardStats();
-        return view('admin.modules.rma.index', ['stats' => $stats]);
+        $stats    = $this->rmaService->getDashboardStats();
+        $statuses = ['open', 'under_review', 'approved', 'pickup_pending', 'closed'];
+        $months   = RmaTicket::query()
+            ->selectRaw('YEAR(created_at) as yr, MONTH(created_at) as mn')
+            ->groupBy('yr', 'mn')
+            ->orderByDesc('yr')->orderByDesc('mn')
+            ->get()
+            ->mapWithKeys(fn ($row) => [
+                $row->yr . '-' . str_pad($row->mn, 2, '0', STR_PAD_LEFT)
+                    => Carbon::createFromDate($row->yr, $row->mn, 1)->format('F Y'),
+            ]);
+        return view('admin.modules.rma.index', compact('stats', 'statuses', 'months'));
     }
 
     public function rmaCreate()
@@ -378,7 +576,16 @@ class ModuleController extends Controller
 
     public function rmaAjax(Request $request)
     {
-        $query = RmaTicket::query()->select('rma_tickets.*');
+        $month  = $request->get('month');
+        $status = $request->get('status');
+
+        $query = RmaTicket::query()
+            ->select('rma_tickets.*')
+            ->when($month, function ($q) use ($month) {
+                [$yr, $mn] = explode('-', $month);
+                $q->whereYear('created_at', $yr)->whereMonth('created_at', $mn);
+            })
+            ->when($status, fn ($q) => $q->where('status', $status));
 
         return datatables()
             ->eloquent($query)
@@ -403,7 +610,17 @@ class ModuleController extends Controller
     // RETURN REPORT MODULE
     public function returnReportIndex()
     {
-        return view('admin.modules.return-report.index');
+        $marketplaces = $this->returnReportRepository->getMarketplaces();
+        $months       = ReturnReport::query()
+            ->selectRaw('YEAR(created_at) as yr, MONTH(created_at) as mn')
+            ->groupBy('yr', 'mn')
+            ->orderByDesc('yr')->orderByDesc('mn')
+            ->get()
+            ->mapWithKeys(fn ($row) => [
+                $row->yr . '-' . str_pad($row->mn, 2, '0', STR_PAD_LEFT)
+                    => Carbon::createFromDate($row->yr, $row->mn, 1)->format('F Y'),
+            ]);
+        return view('admin.modules.return-report.index', compact('months', 'marketplaces'));
     }
 
     public function returnReportCreate()
@@ -467,7 +684,16 @@ class ModuleController extends Controller
 
     public function returnReportAjax(Request $request)
     {
-        $query = ReturnReport::query()->select('return_reports.*');
+        $month       = $request->get('month');
+        $marketplace = $request->get('marketplace');
+
+        $query = ReturnReport::query()
+            ->select('return_reports.*')
+            ->when($month, function ($q) use ($month) {
+                [$yr, $mn] = explode('-', $month);
+                $q->whereYear('created_at', $yr)->whereMonth('created_at', $mn);
+            })
+            ->when($marketplace, fn ($q) => $q->where('marketplace', $marketplace));
 
         return datatables()
             ->eloquent($query)

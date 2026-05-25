@@ -28,6 +28,9 @@ class FbaAutoService
             foreach ($data['items'] as $item) {
                 $shipments[] = $this->repository->create(array_merge($header, [
                     'product_name' => $item['product_name'],
+                    'asin'         => $item['asin'] ?? null,
+                    'sku'          => $item['sku'] ?? null,
+                    'sku_label'    => $item['sku_label'] ?? null,
                     'qty'          => $item['qty'],
                     'qty_price'    => $item['qty_price'],
                 ]));
@@ -337,6 +340,9 @@ class FbaAutoService
             foreach ($data['items'] as $item) {
                 $itemData = array_merge($header, [
                     'product_name' => $item['product_name'],
+                    'asin'         => $item['asin'] ?? null,
+                    'sku'          => $item['sku'] ?? null,
+                    'sku_label'    => $item['sku_label'] ?? null,
                     'qty'          => $item['qty'],
                     'qty_price'    => $item['qty_price'],
                 ]);

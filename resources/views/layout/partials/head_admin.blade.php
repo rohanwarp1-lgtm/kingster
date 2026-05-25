@@ -210,38 +210,25 @@
     .card-title { font-size: 15px; font-weight: 600; color: var(--dark); margin: 0; }
     .card-body { padding: 20px !important; }
 
-    /* ---- Stat tiles — no icon, single-line label + value ---- */
-    .db-icon { display: none !important; }
+    /* ---- Stat tiles — hide icon by default (overridden for stat-card below) ---- */
+    .db-icon { display: none; }
     .db-widgets { width: 100%; }
     .db-info { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; width: 100%; }
     .db-info h6 { margin: 0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .db-info h3 { margin: 0; white-space: nowrap; flex-shrink: 0; }
 
-    /* ---- Legacy bg-comman (used by module views) ---- */
-    .bg-comman {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        border: none !important; color: #fff;
-    }
-    .bg-comman .db-info h6 { color: rgba(255,255,255,.85); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 6px; }
-    .bg-comman .db-info h3 { color: #fff; font-size: 28px; font-weight: 700; margin: 0; }
-    .bg-comman .db-icon { width: 56px; height: 56px; border-radius: 14px; background: rgba(255,255,255,.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .bg-comman .db-icon i { color: #fff !important; font-size: 24px; }
-
     /* ---- Stat cards ---- */
     .stat-card {
-        border-radius: var(--radius) !important; border: none !important;
-        overflow: hidden; transition: transform .25s ease, box-shadow .25s ease;
+        border-radius: 8px !important; border: none !important;
+        overflow: hidden; transition: opacity .2s ease;
     }
-    .stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md) !important; }
-    .stat-card .card-body { padding: 22px !important; }
-    .stat-card .db-info h6 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; opacity: .85; margin-bottom: 6px; }
-    .stat-card .db-info h3 { font-size: 30px; font-weight: 700; margin: 0; line-height: 1; }
-    .stat-card .db-icon {
-        width: 56px; height: 56px; border-radius: 14px;
-        background: rgba(255,255,255,.22); display: flex; align-items: center; justify-content: center;
-        flex-shrink: 0;
-    }
-    .stat-card .db-icon i { font-size: 24px; }
+    .stat-card:hover { opacity: .9; }
+    .stat-card .card-body { padding: 12px 16px !important; }
+    .stat-card .db-widgets { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
+    .stat-card .db-info { display: flex; align-items: center; justify-content: space-between; flex: 1; gap: 8px; }
+    .stat-card .db-info h6 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; opacity: .88; margin: 0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stat-card .db-info h3 { font-size: 22px; font-weight: 700; margin: 0; line-height: 1; white-space: nowrap; flex-shrink: 0; }
+    .stat-card .db-icon { display: none; }
 
     .stat-purple { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; }
     .stat-purple .db-info h6, .stat-purple .db-info h3, .stat-purple .db-icon i { color: #fff !important; }
@@ -254,6 +241,9 @@
 
     .stat-blue { background: linear-gradient(135deg, #00cfe8 0%, #1eb8d5 100%); color: #fff; }
     .stat-blue .db-info h6, .stat-blue .db-info h3, .stat-blue .db-icon i { color: #fff !important; }
+
+    .stat-red { background: linear-gradient(135deg, #ea5455 0%, #f08080 100%); color: #fff; }
+    .stat-red .db-info h6, .stat-red .db-info h3, .stat-red .db-icon i { color: #fff !important; }
 
     /* ---- Tables ---- */
     .table { border-collapse: separate; border-spacing: 0; }

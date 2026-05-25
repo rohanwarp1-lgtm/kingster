@@ -19,7 +19,9 @@ class RmaController extends Controller
 
     public function index(RmaTicketDataTable $dataTable)
     {
-        return $dataTable->render('admin.modules.rma.index');
+        $stats = $this->workflowService->getDashboardStats();
+
+        return $dataTable->render('admin.modules.rma.index', compact('stats'));
     }
 
     public function create()

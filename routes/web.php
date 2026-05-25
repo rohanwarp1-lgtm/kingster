@@ -153,6 +153,9 @@ Route::middleware(['auth', \App\Http\Middleware\AutoMigrate::class])->prefix('ad
         Route::post('fba-auto/change-status/{id}', [ModuleController::class, 'fbaAutoChangeStatus'])->name('admin.fba-auto.change-status');
         Route::get('fba-auto/ajax', [ModuleController::class, 'fbaAutoAjax'])->name('admin.fba-auto.ajax');
         Route::get('fba-auto/stats', [ModuleController::class, 'fbaAutoStats'])->name('admin.fba-auto.stats');
+        Route::get('fba-auto/filter-summary', [ModuleController::class, 'fbaAutoFilterSummary'])->name('admin.fba-auto.filter-summary');
+        Route::get('fba-auto/export', [ModuleController::class, 'fbaAutoExport'])->name('admin.fba-auto.export');
+        Route::get('fba-auto/report-data', [ModuleController::class, 'fbaAutoReportData'])->name('admin.fba-auto.report-data');
         Route::get('fba-auto/products/search', [FbaAutoController::class, 'searchProducts'])->name('admin.fba-auto.products.search');
 
         // Module Routes - Warranty
